@@ -1,0 +1,37 @@
+﻿using Identity.Domain.Entities;
+using Identity.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Identity.Infrastructure.Persistence.Configurations;
+
+public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
+{
+    public void Configure(EntityTypeBuilder<Account> b)
+    {
+        b.ToTable("accounts");
+
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).HasColumnName("id");
+
+        b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
+        b.HasIndex(x => x.UserId).HasDatabaseName("idx_accounts_user_id");
+
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+        b.Property(x => x.Provider)
+            .HasColumnName("provider")
+            .HasConversion(
+                v => v == AuthProvider.Local ? "LOCAL" : v.ToString().ToUpperInvariant(),
+                v => Enum.Parse<AuthProvider>(v, true))
+            .HasMaxLength(20)
+            .IsRequired();
+
+        // PasswordHash VO nullable
+        b.OwnsOne(x => x.PasswordHash, h =>
+        {
+            h.Property(p => p.Value).HasColumnName("password_hash");
+        });
+    }
+}

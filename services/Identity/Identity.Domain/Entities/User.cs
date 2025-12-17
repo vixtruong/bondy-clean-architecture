@@ -1,11 +1,8 @@
 ﻿using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
 using Bondy.SharedKernel.Common;
-using Identity.Domain.Enums;
-using Identity.Domain.ValueObjects;
-using System.Security.Principal;
 
-namespace Bondy.Identity.Domain.Entities;
+namespace Identity.Domain.Entities;
 
 public sealed class User : AggregateRoot
 {
