@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="services/ApiGateway/ApiGateway.csproj" Id="b1caf1e4-5d34-4f4b-a25c-38649fb42593" />
   <Project Path="services/Identity/Identity.Api/Identity.Api.csproj" Id="a85fbcf0-b73f-43c9-ac68-546383437814" />
   <Project Path="services/Identity/Identity.Application/Identity.Application.csproj" Id="817a354e-a24f-475b-8bf8-9e1f7c4cccd5" />
   <Project Path="services/Identity/Identity.Contracts/Identity.Contracts.csproj" Id="b24498ae-9050-4601-a34a-c039a4417c91" />

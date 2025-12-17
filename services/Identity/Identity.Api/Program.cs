@@ -19,7 +19,7 @@ namespace Identity.Api
 
             builder.Services.AddServiceSwagger();
 
-            builder.Services.AddJwtAuth(builder.Configuration);
+            //builder.Services.AddJwtAuth(builder.Configuration);
 
             builder.Services.AddServiceHealthChecks(builder.Configuration);
 
@@ -36,12 +36,14 @@ namespace Identity.Api
             {
                 app.UseServiceSwagger();
             }
+            else
+            {
+                // Configure the HTTP request pipeline.
 
-            // Configure the HTTP request pipeline.
+                app.UseHttpsRedirection();
+            }
 
-            app.UseHttpsRedirection();
-
-            app.UseAuthentication();
+            //app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
