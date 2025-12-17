@@ -1,0 +1,53 @@
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+
+namespace Bondy.ServiceDefaults.Extensions;
+
+public static class JwtExtensions
+{
+    /// <summary>
+    /// Adds JWT Bearer auth using symmetric key.
+    /// Config:
+    /// Jwt:Issuer, Jwt:Audience, Jwt:Key
+    /// </summary>
+    public static IServiceCollection AddJwtAuth(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var issuer = configuration["Jwt:Issuer"];
+        var audience = configuration["Jwt:Audience"];
+        var key = configuration["Jwt:Key"];
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new InvalidOperationException("Missing Jwt:Key in configuration.");
+
+        var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false; // set true in prod with HTTPS
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+                    ValidIssuer = issuer,
+
+                    ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+                    ValidAudience = audience,
+
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = signingKey,
+
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromSeconds(30)
+                };
+            });
+
+        services.AddAuthorization();
+        return services;
+    }
+}
