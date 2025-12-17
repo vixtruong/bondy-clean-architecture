@@ -19,7 +19,7 @@ public static class JwtExtensions
     {
         var issuer = configuration["Jwt:Issuer"];
         var audience = configuration["Jwt:Audience"];
-        var key = configuration["Jwt:Key"];
+        var key = configuration["Jwt:Secret"];
 
         if (string.IsNullOrWhiteSpace(key))
             throw new InvalidOperationException("Missing Jwt:Key in configuration.");

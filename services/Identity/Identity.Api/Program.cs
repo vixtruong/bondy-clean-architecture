@@ -1,3 +1,8 @@
+using Bondy.ServiceDefaults.Extensions;
+using Bondy.ServiceDefaults.Middlewares;
+using Identity.Application;
+using Identity.Infrastructure;
+
 namespace Identity.Api
 {
     public class Program
@@ -8,18 +13,41 @@ namespace Identity.Api
 
             // Add services to the container.
 
+            builder.AddSerilogLogging();
+
             builder.Services.AddControllers();
+
+            builder.Services.AddServiceSwagger();
+
+            //builder.Services.AddJwtAuth(builder.Configuration);
+
+            builder.Services.AddServiceHealthChecks(builder.Configuration);
+
+            builder.Services.AddTransient<GlobalExceptionMiddleware>();
+
+            builder.Services.AddIdentityApplication();
+            builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            app.UseMiddleware<GlobalExceptionMiddleware>();
 
-            app.UseHttpsRedirection();
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseServiceSwagger();
+            }
+            else
+            {
+                // Configure the HTTP request pipeline.
 
+                app.UseHttpsRedirection();
+            }
+
+            //app.UseAuthentication();
             app.UseAuthorization();
 
-
             app.MapControllers();
+            app.MapServiceHealthChecks();
 
             app.Run();
         }
