@@ -189,3 +189,13 @@ mono_crash.*
 **/*.jmconfig
 **/*.GhostDoc.xml
 **/FodyWeavers.xsd
+
+############################
+# ASP.NET Core appsettings
+############################
+
+# Ignore all environment-specific appsettings
+**/appsettings.*.json
+
+# BUT keep the base config
+!**/appsettings.json
