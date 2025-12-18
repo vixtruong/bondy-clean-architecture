@@ -2,7 +2,7 @@
 using Bondy.SharedKernel.Querying;
 using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Infrastructure.Querying;
+namespace Identity.Infrastructure.Common.Querying;
 
 public static class EfPagingExtensions
 {

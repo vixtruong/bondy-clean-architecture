@@ -1,9 +1,11 @@
-﻿using Identity.Application.Abstractions.Persistence;
+﻿using Bondy.SharedKernel.Abstractions;
+using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
+using Identity.Infrastructure.Common.Clock;
+using Identity.Infrastructure.Common.Security;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Repositories;
-using Identity.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,12 +26,15 @@ public static class DependencyInjection
 
         services.AddScoped<IIdentityDbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
 
+        // repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
-        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<ITokenGenerator, TokenGenerator>();
 
-        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+        services.AddSingleton<IHasher, BcryptHasher>();
+        services.AddSingleton<IClock, SystemClock>();
 
         return services;
     }

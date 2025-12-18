@@ -3,16 +3,18 @@ using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Contracts.Users;
 using Identity.Domain.Entities;
-using Identity.Infrastructure.Querying;
+using Identity.Domain.ValueObjects;
+using Identity.Infrastructure.Common.Querying;
+using Identity.Infrastructure.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Repositories;
 
-public sealed class UserRepository : IUserRepository
+public sealed class UserRepository : BaseRepository, IUserRepository
 {
-    private readonly IIdentityDbContext _db;
-
-    public UserRepository(IIdentityDbContext db) => _db = db;
+    public UserRepository(IIdentityDbContext db) : base(db)
+    {
+    }
 
     public async Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl, CancellationToken ct)
     {
@@ -26,8 +28,11 @@ public sealed class UserRepository : IUserRepository
     public Task<User?> GetByEmailAsync(string emailNormalized, CancellationToken ct)
     {
         // Tuỳ bạn normalize thế nào; ở đây so thẳng Value
+        var email = Email.Create(emailNormalized);
+
         return _db.Users
-            .FirstOrDefaultAsync(u => u.Email.Value == emailNormalized, ct);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email == email, ct);
     }
 
     public Task<List<UserBasicResponse>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds, CancellationToken ct)
@@ -39,7 +44,7 @@ public sealed class UserRepository : IUserRepository
             .Where(u => userIds.Contains(u.Id))
             .Select(u => new UserBasicResponse(
                 u.Id,
-                (u.Name.FirstName ?? "") + " " + (u.Name.MiddleName ?? "") + " " + (u.Name.LastName ?? ""),
+                u.Name.ToString(),
                 u.AvatarUrl,
                 u.FriendCount
             ))
@@ -53,7 +58,7 @@ public sealed class UserRepository : IUserRepository
             .Where(u => u.Id == userId)
             .Select(u => new UserBasicResponse(
                 u.Id,
-                (u.Name.FirstName ?? "") + " " + (u.Name.MiddleName ?? "") + " " + (u.Name.LastName ?? ""),
+                u.Name.ToString(),
                 u.AvatarUrl,
                 u.FriendCount
             ))
@@ -82,7 +87,7 @@ public sealed class UserRepository : IUserRepository
             pageSize,
             u => new UserBasicResponse(
                 u.Id,
-                (u.Name.FirstName ?? "") + " " + (u.Name.MiddleName ?? "") + " " + (u.Name.LastName ?? ""),
+                u.Name.ToString(),
                 u.AvatarUrl,
                 u.FriendCount
             ),

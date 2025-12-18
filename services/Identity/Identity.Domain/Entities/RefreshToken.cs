@@ -6,9 +6,11 @@ namespace Identity.Domain.Entities;
 public sealed class RefreshToken : Entity
 {
     public long UserId { get; private set; }
+
     public HashedValue TokenHash { get; private set; } = default!;
 
     public bool Revoked { get; private set; } = false;
+
     public DateTime? RevokedAt { get; private set; }
 
     public DateTime ExpiresAt { get; private set; }
@@ -26,14 +28,17 @@ public sealed class RefreshToken : Entity
         Revoked = false;
     }
 
-    public bool IsExpired(DateTime utcNow) => utcNow >= ExpiresAt;
+    public bool IsActive(DateTime utcNow) =>
+        !Revoked && RevokedAt == null && ExpiresAt > utcNow;
 
-    public void Revoke(DateTime utcNow)
+    public bool IsExpired(DateTime now) => now >= ExpiresAt;
+
+    public void Revoke(DateTime now)
     {
         if (Revoked) return;
 
         Revoked = true;
-        RevokedAt = utcNow;
-        UpdatedAt = utcNow;
+        RevokedAt = now;
+        UpdatedAt = now;
     }
 }

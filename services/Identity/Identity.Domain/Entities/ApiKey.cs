@@ -7,7 +7,7 @@ public sealed class ApiKey : AggregateRoot
 {
     public string Name { get; private set; } = default!;
     public HashedValue KeyHash { get; private set; } = default!;
-    public ApiKeyPrefix Prefix { get; private set; } = default!;
+    public string Prefix { get; private set; } = default!;
 
     public DateTimeOffset? ExpiresAt { get; private set; }
     public bool Active { get; private set; } = true;
@@ -17,7 +17,7 @@ public sealed class ApiKey : AggregateRoot
     public ApiKey(
         string name,
         HashedValue keyHash,
-        ApiKeyPrefix prefix,
+        string prefix,
         DateTimeOffset? expiresAt,
         DateTimeOffset createdAt)
     {
