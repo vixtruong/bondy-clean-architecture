@@ -3,17 +3,23 @@ using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Common;
 using Bondy.SharedKernel.Constants;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bondy.ServiceDefaults.Middlewares;
 
 public sealed class GlobalExceptionMiddleware : IMiddleware
 {
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger)
+    public GlobalExceptionMiddleware(
+        ILogger<GlobalExceptionMiddleware> logger,
+        IOptions<JsonOptions> jsonOptions)
     {
         _logger = logger;
+        _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
     }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -27,18 +33,12 @@ public sealed class GlobalExceptionMiddleware : IMiddleware
             var traceId = context.TraceIdentifier;
             var err = MapException(ex, traceId);
 
-            if (err.Type is ErrorType.Validation or ErrorType.Unauthorized or ErrorType.Forbidden)
-            {
-                _logger.LogDebug("Expected exception suppressed. TraceId={TraceId} Code={Code} Type={Type}",
-                    traceId, err.Code, err.Type);
-            }
+            if (err.Type != ErrorType.Validation)
+                _logger.LogError(ex, "Unhandled exception. TraceId={TraceId} Code={Code} Type={Type}", traceId, err.Code, err.Type);
             else
-            {
-                _logger.LogError(ex, "Unhandled exception. TraceId={TraceId} Code={Code} Type={Type}",
-                    traceId, err.Code, err.Type);
-            }
+                _logger.LogDebug("Validation exception suppressed. TraceId={TraceId} Code={Code}", traceId, err.Code);
 
-            context.Response.StatusCode = HttpStatusMapper.ToStatusCode(err.Type);
+            context.Response.StatusCode = err.Type.ToStatusCode();
             context.Response.ContentType = "application/json";
 
             var payload = new ApiResponse(
@@ -49,7 +49,7 @@ public sealed class GlobalExceptionMiddleware : IMiddleware
                 Message: err.Message
             );
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(payload, _jsonOptions));
         }
     }
 
@@ -58,16 +58,7 @@ public sealed class GlobalExceptionMiddleware : IMiddleware
         var baseErr = ex switch
         {
             ArgumentException aex => Error.Validation(ErrorCodes.Validation.Argument, aex.Message),
-
-            OperationCanceledException => Error.Failure(ErrorCodes.Server.Cancelled, "Request was cancelled"),
-
             UnauthorizedAccessException uex => Error.Unauthorized(ErrorCodes.Auth.Unauthorized, uex.Message),
-
-            TimeoutException tex => Error.Failure(ErrorCodes.Server.Timeout, tex.Message),
-
-            HttpRequestException hex => Error.Failure(ErrorCodes.Server.DependencyFailure,
-                string.IsNullOrWhiteSpace(hex.Message) ? "Dependency call failed" : hex.Message),
-
             _ => Error.Failure(ErrorCodes.Server.Error, "Unexpected error")
         };
 
