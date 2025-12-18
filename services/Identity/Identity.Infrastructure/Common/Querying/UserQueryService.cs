@@ -4,26 +4,26 @@ using Identity.Application.Abstractions.Persistence;
 using Identity.Contracts.Users;
 using Microsoft.EntityFrameworkCore;
 
-namespace Identity.Infrastructure.Querying;
+namespace Identity.Infrastructure.Common.Querying;
 
-public sealed class UserQueryService : QueryServiceBase<Identity.Domain.Entities.User>
+public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
 {
     private readonly IIdentityDbContext _db;
 
     public UserQueryService(IIdentityDbContext db) => _db = db;
 
-    protected override IReadOnlyDictionary<string, Func<IQueryable<Identity.Domain.Entities.User>, bool, IQueryable<Identity.Domain.Entities.User>>> SortMap
-        => new Dictionary<string, Func<IQueryable<Identity.Domain.Entities.User>, bool, IQueryable<Identity.Domain.Entities.User>>>(StringComparer.OrdinalIgnoreCase)
+    protected override IReadOnlyDictionary<string, Func<IQueryable<Domain.Entities.User>, bool, IQueryable<Domain.Entities.User>>> SortMap
+        => new Dictionary<string, Func<IQueryable<Domain.Entities.User>, bool, IQueryable<Domain.Entities.User>>>(StringComparer.OrdinalIgnoreCase)
         {
             ["createdAt"] = (q, desc) => desc ? q.OrderByDescending(x => x.CreatedAt) : q.OrderBy(x => x.CreatedAt),
             ["email"] = (q, desc) => desc ? q.OrderByDescending(x => x.Email.Value) : q.OrderBy(x => x.Email.Value),
             ["friendCount"] = (q, desc) => desc ? q.OrderByDescending(x => x.FriendCount) : q.OrderBy(x => x.FriendCount),
         };
 
-    protected override IQueryable<Identity.Domain.Entities.User> DefaultSort(IQueryable<Identity.Domain.Entities.User> q)
+    protected override IQueryable<Domain.Entities.User> DefaultSort(IQueryable<Domain.Entities.User> q)
         => q.OrderByDescending(x => x.Id);
 
-    private static readonly Expression<Func<Identity.Domain.Entities.User, UserBasicResponse>> BasicSelector =
+    private static readonly Expression<Func<Domain.Entities.User, UserBasicResponse>> BasicSelector =
         u => new UserBasicResponse(
             u.Id,
             // Nếu bạn muốn join name “đẹp” như code cũ, nên precompute ở DB (FullName) hoặc map ra app layer.
@@ -35,7 +35,7 @@ public sealed class UserQueryService : QueryServiceBase<Identity.Domain.Entities
 
     public Task<PagedResult<UserBasicResponse>> SearchAsync(UserListRequest req, CancellationToken ct)
     {
-        IQueryable<Identity.Domain.Entities.User> q = _db.Users.AsNoTracking();
+        IQueryable<Domain.Entities.User> q = _db.Users.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(req.EmailContains))
         {

@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Bondy.ServiceDefaults.Http;
+using Bondy.SharedKernel.Common;
+using Identity.Application.Services.Auth;
+using Identity.Contracts.Auth;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers
 {
@@ -6,10 +10,15 @@ namespace Identity.Api.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        [HttpGet("hello")]
-        public IActionResult test()
+        private readonly IAuthService _service;
+
+        public AuthController(IAuthService service)
         {
-            return Ok("abc");
+            _service = service;
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
+            => this.ToActionResult(await _service.LoginAsync(request, ct));
     }
 }

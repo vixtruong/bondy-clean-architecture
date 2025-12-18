@@ -1,25 +1,28 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Bondy.SharedKernel.Abstractions;
 using Identity.Application.Abstractions.Security;
 using Identity.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Identity.Infrastructure.Security;
+namespace Identity.Infrastructure.Common.Security;
 
-public sealed class JwtTokenGenerator : IJwtTokenGenerator
+public sealed class TokenGenerator : ITokenGenerator
 {
     private readonly JwtOptions _opt;
+    private readonly IClock _clock;
 
-    public JwtTokenGenerator(IOptions<JwtOptions> opt)
+    public TokenGenerator(IOptions<JwtOptions> opt, IClock clock)
     {
+        _clock = clock;
         _opt = opt.Value;
     }
 
     public string GenerateAccessToken(User user)
     {
-        var now = DateTime.UtcNow;
+        var now = _clock.UtcNow;
 
         var claims = new List<Claim>
         {

@@ -28,6 +28,7 @@ namespace Identity.Api
             builder.Services.AddIdentityApplication();
             builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
+
             var app = builder.Build();
 
             app.UseMiddleware<GlobalExceptionMiddleware>();

@@ -2,7 +2,7 @@
 
 namespace Identity.Application.Abstractions.Security
 {
-    public interface IJwtTokenGenerator
+    public interface ITokenGenerator
     {
         string GenerateAccessToken(User user);
     }
