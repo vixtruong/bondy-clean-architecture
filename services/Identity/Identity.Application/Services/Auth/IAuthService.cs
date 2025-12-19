@@ -6,5 +6,5 @@ namespace Identity.Application.Services.Auth;
 
 public interface IAuthService
 {
-    Task<Result<LoginResponse>> LoginAsync(LoginRequest req, CancellationToken ct);
+    Task<Result<LoginResponse>> LoginAsync(LoginRequest req);
 }

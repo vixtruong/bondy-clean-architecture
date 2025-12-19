@@ -7,7 +7,7 @@ using Identity.Infrastructure.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Repositories;
-public sealed class RefreshTokenRepository : BaseRepository, IRefreshTokenRepository
+public sealed class RefreshTokenRepository : RepositoryBase, IRefreshTokenRepository
 {
     private readonly IHasher _hasher;
 

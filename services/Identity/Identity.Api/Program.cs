@@ -15,7 +15,9 @@ namespace Identity.Api
 
             builder.AddSerilogLogging();
 
-            builder.Services.AddControllers();
+            builder.Services
+                .AddControllers()
+                .AddServiceValidation();
 
             builder.Services.AddServiceSwagger();
 
@@ -27,7 +29,6 @@ namespace Identity.Api
 
             builder.Services.AddIdentityApplication();
             builder.Services.AddIdentityInfrastructure(builder.Configuration);
-
 
             var app = builder.Build();
 

@@ -22,7 +22,7 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
         b.Property(x => x.KeyHash)
             .HasConversion(
                 v => v.Value,
-                v => HashedValue.Create(v))
+                v => HashedValue.FromPersisted(v))
             .HasColumnName("key_hash")
             .IsRequired();
 

@@ -32,4 +32,9 @@ public static class ErrorCodes
         public const string DatabaseError = "server.database_error";
         public const string Cancelled = "server.cancelled";
     }
+
+    public static class Mail
+    {
+        public const string TemplateMissingData = "mail.tempalte_missingdata";
+    }
 }

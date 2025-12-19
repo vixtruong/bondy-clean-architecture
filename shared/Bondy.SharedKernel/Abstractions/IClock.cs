@@ -2,13 +2,13 @@
 
 public interface IClock
 {
-    DateTime UtcNow { get; }
-    DateTimeOffset UtcNowOffset { get; }
+    DateTime Now { get; }
+    DateTimeOffset NowOffset { get; }
 
     // helper
-    DateTime UtcDaysFromNow(int days);
-    DateTimeOffset UtcDaysFromNowOffset(int days);
+    DateTime DaysFromNow(int days);
+    DateTimeOffset DaysFromNowOffset(int days);
 
-    DateTime UtcMinutesFromNow(int minutes);
-    DateTimeOffset UtcMinutesFromNowOffset(int minutes);
+    DateTime MinutesFromNow(int minutes);
+    DateTimeOffset MinutesFromNowOffset(int minutes);
 }

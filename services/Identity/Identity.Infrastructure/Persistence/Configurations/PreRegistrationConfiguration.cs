@@ -19,7 +19,7 @@ public sealed class PreRegistrationConfiguration : IEntityTypeConfiguration<PreR
 
         // Email as scalar column
         b.Property(x => x.Email)
-            .HasConversion(v => v.Value, v => Email.Create(v))
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v))
             .HasColumnName("email")
             .IsRequired();
 
@@ -40,7 +40,7 @@ public sealed class PreRegistrationConfiguration : IEntityTypeConfiguration<PreR
 
         // PasswordHash as scalar column
         b.Property(x => x.PasswordHash)
-            .HasConversion(v => v.Value, v => HashedValue.Create(v))
+            .HasConversion(v => v.Value, v => HashedValue.FromPersisted(v))
             .HasColumnName("password_hash")
             .IsRequired();
     }
