@@ -9,6 +9,16 @@
           "Url": "http://localhost:8081/swagger/v1/swagger.json"
         }
       ]
+    },
+    {
+      "Key": "mail",
+      "Config": [
+        {
+          "Name": "Mail API",
+          "Version": "v1",
+          "Url": "http://localhost:8082/swagger/v1/swagger.json"
+        }
+      ]
     }
   ]
 }
