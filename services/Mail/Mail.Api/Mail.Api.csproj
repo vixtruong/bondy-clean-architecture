@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\shared\Bondy.Contracts\Bondy.Contracts.csproj" />
     <ProjectReference Include="..\..\..\shared\Bondy.ServiceDefaults\Bondy.ServiceDefaults.csproj" />
     <ProjectReference Include="..\Mail.Application\Mail.Application.csproj" />
