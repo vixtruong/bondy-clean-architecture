@@ -22,7 +22,7 @@ public sealed class TokenGenerator : ITokenGenerator
 
     public string GenerateAccessToken(User user)
     {
-        var now = _clock.UtcNow;
+        var now = _clock.Now;
 
         var claims = new List<Claim>
         {

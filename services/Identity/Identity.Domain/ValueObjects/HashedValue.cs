@@ -1,21 +1,27 @@
-﻿namespace Identity.Domain.ValueObjects;
+﻿using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Constants;
+
+namespace Identity.Domain.ValueObjects;
 
 public sealed class HashedValue : ValueObject
 {
     public string Value { get; }
 
-    private HashedValue(string value)
-    {
-        Value = value;
-    }
+    private HashedValue(string value) => Value = value;
 
-    public static HashedValue Create(string hash)
+    public static Result<HashedValue> Create(string hash)
     {
         if (string.IsNullOrWhiteSpace(hash))
-            throw new ArgumentException("Hash value is required");
+            return Result.Failure<HashedValue>(
+                Error.Validation(ErrorCodes.Validation.Required, "Hash value is required"));
 
-        return new HashedValue(hash);
+        hash = hash.Trim();
+
+        return Result.Success(new HashedValue(hash));
     }
+
+    public static HashedValue FromPersisted(string value)
+        => Create(value).ValueOrThrow();
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {

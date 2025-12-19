@@ -4,7 +4,7 @@ using Bondy.SharedKernel.Common;
 
 namespace Identity.Domain.Entities;
 
-public sealed class OtpCode : Entity
+public sealed class OtpCode : AggregateRoot
 {
     public OtpSubjectType SubjectType { get; private set; }
     public long SubjectId { get; private set; }

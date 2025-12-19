@@ -10,15 +10,14 @@ public static class EfPagingExtensions
         this IQueryable<TEntity> q,
         int page,
         int size,
-        Expression<Func<TEntity, TDto>> selector,
-        CancellationToken ct)
+        Expression<Func<TEntity, TDto>> selector)
     {
-        var total = await q.LongCountAsync(ct);
+        var total = await q.LongCountAsync();
         var items = await q
             .Skip((page - 1) * size)
             .Take(size)
             .Select(selector)
-            .ToListAsync(ct);
+            .ToListAsync();
 
         return new PagedResult<TDto>(items, page, size, total);
     }

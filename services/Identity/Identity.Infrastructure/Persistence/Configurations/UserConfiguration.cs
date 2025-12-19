@@ -20,7 +20,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         // Email (1 cột) -> conversion để index/query dễ
         b.Property(x => x.Email)
-            .HasConversion(v => v.Value, v => Email.Create(v)) // đổi Create nếu factory khác
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v)) // đổi Create nếu factory khác
             .HasColumnName("email")
             .IsRequired();
 

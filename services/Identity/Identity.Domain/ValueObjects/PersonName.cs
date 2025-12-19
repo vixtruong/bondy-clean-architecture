@@ -1,4 +1,7 @@
-﻿namespace Identity.Domain.ValueObjects;
+﻿using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Constants;
+
+namespace Identity.Domain.ValueObjects;
 
 public sealed class PersonName : ValueObject
 {
@@ -13,20 +16,26 @@ public sealed class PersonName : ValueObject
         LastName = lastName;
     }
 
-    public static PersonName Create(string firstName, string? middleName, string lastName)
+    public static Result<PersonName> Create(string firstName, string? middleName, string lastName)
     {
         if (string.IsNullOrWhiteSpace(firstName))
-            throw new ArgumentException("First name is required");
+            return Result.Failure<PersonName>(
+                Error.Validation(ErrorCodes.Validation.Required, "First name is required"));
 
         if (string.IsNullOrWhiteSpace(lastName))
-            throw new ArgumentException("Last name is required");
+            return Result.Failure<PersonName>(
+                Error.Validation(ErrorCodes.Validation.Required, "Last name is required"));
 
-        return new PersonName(
-            firstName.Trim(),
-            middleName?.Trim(),
-            lastName.Trim()
-        );
+        firstName = firstName.Trim();
+        lastName = lastName.Trim();
+
+        middleName = string.IsNullOrWhiteSpace(middleName) ? null : middleName.Trim();
+
+        return Result.Success(new PersonName(firstName, middleName, lastName));
     }
+
+    public static PersonName FromPersisted(string firstName, string? middleName, string lastName)
+        => Create(firstName, middleName, lastName).ValueOrThrow();
 
     protected override IEnumerable<object?> GetEqualityComponents()
     {
@@ -36,5 +45,5 @@ public sealed class PersonName : ValueObject
     }
 
     public override string ToString()
-        => $"{FirstName} {MiddleName} {LastName}".Replace("  ", " ");
+        => string.Join(" ", new[] { FirstName, MiddleName, LastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
 }

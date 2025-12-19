@@ -3,7 +3,7 @@ using Bondy.SharedKernel.Common;
 
 namespace Identity.Domain.Entities;
 
-public sealed class RefreshToken : Entity
+public sealed class RefreshToken : AggregateRoot
 {
     public long UserId { get; private set; }
 

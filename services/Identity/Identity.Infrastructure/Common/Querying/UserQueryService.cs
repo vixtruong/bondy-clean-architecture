@@ -33,7 +33,7 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
             u.FriendCount
         );
 
-    public Task<PagedResult<UserBasicResponse>> SearchAsync(UserListRequest req, CancellationToken ct)
+    public Task<PagedResult<UserBasicResponse>> SearchAsync(UserListRequest req)
     {
         IQueryable<Domain.Entities.User> q = _db.Users.AsNoTracking();
 
@@ -48,6 +48,6 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
 
         q = ApplyCommon(q, req);
 
-        return q.ToPagedResultAsync(req.PageNumber, req.PageSize, BasicSelector, ct);
+        return q.ToPagedResultAsync(req.PageNumber, req.PageSize, BasicSelector);
     }
 }

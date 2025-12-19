@@ -22,7 +22,7 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
 
         // TokenHash (1 cột) -> conversion
         b.Property(x => x.TokenHash)
-            .HasConversion(v => v.Value, v => HashedValue.Create(v))
+            .HasConversion(v => v.Value, v => HashedValue.FromPersisted(v))
             .HasColumnName("token_hash")
             .IsRequired();
 

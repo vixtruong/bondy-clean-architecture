@@ -1,5 +1,4 @@
 ﻿using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Common;
 using Identity.Application.Services.Auth;
 using Identity.Contracts.Auth;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ namespace Identity.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
-            => this.ToActionResult(await _service.LoginAsync(request, ct));
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+            => this.ToActionResult(await _service.LoginAsync(request));
     }
 }
