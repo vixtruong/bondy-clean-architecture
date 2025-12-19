@@ -83,12 +83,12 @@ public sealed class SqlFileMigrator : IDbMigrator
     private async Task EnsureMigrationsTableAsync(CancellationToken ct)
     {
         const string create = @"
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version        VARCHAR(50) PRIMARY KEY,
-  description    TEXT NOT NULL,
-  checksum       VARCHAR(64) NOT NULL,
-  applied_at     TIMESTAMPTZ NOT NULL DEFAULT now()
-);";
+            CREATE TABLE IF NOT EXISTS schema_migrations (
+              version        VARCHAR(50) PRIMARY KEY,
+              description    TEXT NOT NULL,
+              checksum       VARCHAR(64) NOT NULL,
+              applied_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+            );";
         await ExecuteSqlAsync(create, transaction: null, ct);
     }
 
@@ -110,8 +110,8 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     private async Task InsertAppliedAsync(string version, string desc, string checksum, DbTransaction tx, CancellationToken ct)
     {
         const string ins = @"
-INSERT INTO schema_migrations(version, description, checksum, applied_at)
-VALUES (@v, @d, @c, now());";
+            INSERT INTO schema_migrations(version, description, checksum, applied_at)
+            VALUES (@v, @d, @c, now());";
 
         await using var cmd = _connection.CreateCommand();
         cmd.Transaction = tx;

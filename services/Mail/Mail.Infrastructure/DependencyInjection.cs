@@ -40,6 +40,7 @@ public static class DependencyInjection
 
         // Native SQL migrator
         services.AddScoped<IDbMigrator, SqlFileMigrator>();
+        services.AddHostedService<MigrationHostedService>();
 
         // Repositories
         services.AddScoped<IMailRepository, MailRepository>();
