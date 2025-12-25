@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using Bondy.SharedKernel.Common;
+using System.Text.RegularExpressions;
+using Bondy.SharedKernel.Constants;
 
 namespace Identity.Domain.ValueObjects
 {
@@ -11,17 +13,23 @@ namespace Identity.Domain.ValueObjects
             Value = value;
         }
 
-        public static Email Create(string email)
+        public static Result<Email> Create(string input)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Email is required");
+            if (string.IsNullOrWhiteSpace(input))
+                return Result.Failure<Email>(Error.Validation(ErrorCodes.Validation.Required, "Email is required"));
 
-            email = email.Trim().ToLowerInvariant();
+            input = input.Trim().ToLowerInvariant();
 
-            if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                throw new ArgumentException("Invalid email format");
+            if (!Regex.IsMatch(input, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+                return Result.Failure<Email>(Error.Validation(ErrorCodes.Validation.InvalidFormat, "Invalid email format"));
 
-            return new Email(email);
+            return Result.Success(new Email(input));
+        }
+
+        public static Email FromPersisted(string value)
+        {
+            var r = Create(value);
+            return r.ValueOrThrow();
         }
 
         protected override IEnumerable<object?> GetEqualityComponents()

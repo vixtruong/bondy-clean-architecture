@@ -1,7 +1,14 @@
-﻿namespace Bondy.SharedKernel.Abstractions
+﻿namespace Bondy.SharedKernel.Abstractions;
+
+public interface IClock
 {
-    interface IClock
-    {
-        DateTime UtcNow { get; }
-    }
+    DateTime Now { get; }
+    DateTimeOffset NowOffset { get; }
+
+    // helper
+    DateTime DaysFromNow(int days);
+    DateTimeOffset DaysFromNowOffset(int days);
+
+    DateTime MinutesFromNow(int minutes);
+    DateTimeOffset MinutesFromNowOffset(int minutes);
 }

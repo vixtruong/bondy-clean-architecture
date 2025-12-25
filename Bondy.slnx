@@ -1,10 +1,17 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="services/ApiGateway/ApiGateway.csproj" Id="b1caf1e4-5d34-4f4b-a25c-38649fb42593" />
   <Project Path="services/Identity/Identity.Api/Identity.Api.csproj" Id="a85fbcf0-b73f-43c9-ac68-546383437814" />
   <Project Path="services/Identity/Identity.Application/Identity.Application.csproj" Id="817a354e-a24f-475b-8bf8-9e1f7c4cccd5" />
   <Project Path="services/Identity/Identity.Contracts/Identity.Contracts.csproj" Id="b24498ae-9050-4601-a34a-c039a4417c91" />
   <Project Path="services/Identity/Identity.Domain/Identity.Domain.csproj" Id="84cbe93a-981b-49ca-968a-1340973a8c85" />
   <Project Path="services/Identity/Identity.Infrastructure/Identity.Infrastructure.csproj" Id="48345432-6a4c-4a25-b9f3-ed5a46972888" />
+  <Project Path="services/Mail/Mail.Api/Mail.Api.csproj" Id="3cc23b8a-4b70-46b5-8fd3-a404579412b6" />
+  <Project Path="services/Mail/Mail.Application/Mail.Application.csproj" Id="123a329c-0ad9-4b28-bf18-460a03cd164d" />
+  <Project Path="services/Mail/Mail.Domain/Mail.Domain.csproj" Id="e10f4535-d347-4044-ba3f-f4677d879c78" />
+  <Project Path="services/Mail/Mail.Infrastructure/Mail.Infrastructure.csproj" Id="ea8f04bd-0f7c-41fa-a55c-32b8448a716c" />
   <Project Path="shared/Bondy.Contracts/Bondy.Contracts.csproj" />
   <Project Path="shared/Bondy.ServiceDefaults/Bondy.ServiceDefaults.csproj" />
   <Project Path="shared/Bondy.SharedKernel/Bondy.SharedKernel.csproj" />

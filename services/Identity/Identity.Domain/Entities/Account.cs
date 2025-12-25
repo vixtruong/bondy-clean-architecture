@@ -4,7 +4,7 @@ using Bondy.SharedKernel.Common;
 
 namespace Identity.Domain.Entities;
 
-public sealed class Account : Entity
+public sealed class Account : AggregateRoot
 {
     public long UserId { get; private set; }
     public AuthProvider Provider { get; private set; } = AuthProvider.Local;

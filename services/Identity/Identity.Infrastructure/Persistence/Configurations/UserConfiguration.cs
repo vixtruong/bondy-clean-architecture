@@ -1,5 +1,6 @@
 ﻿using Identity.Domain.Entities;
 using Identity.Domain.Enums;
+using Identity.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,14 +18,17 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
         b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
-        // Email VO -> email
-        b.OwnsOne(x => x.Email, e =>
-        {
-            e.Property(p => p.Value).HasColumnName("email").IsRequired();
-        });
-        b.HasIndex("email").IsUnique();
+        // Email (1 cột) -> conversion để index/query dễ
+        b.Property(x => x.Email)
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v)) // đổi Create nếu factory khác
+            .HasColumnName("email")
+            .IsRequired();
 
-        // PersonName VO -> first/middle/last
+        b.HasIndex(x => x.Email)
+            .IsUnique()
+            .HasDatabaseName("ux_users_email");
+
+        // PersonName (nhiều cột) -> owns one OK
         b.OwnsOne(x => x.Name, n =>
         {
             n.Property(p => p.FirstName).HasColumnName("first_name").IsRequired();
@@ -36,7 +40,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.Dob).HasColumnName("dob");
         b.Property(x => x.Gender).HasColumnName("gender");
 
-        // role VARCHAR(10) + check constraint
         b.Property(x => x.Role)
             .HasColumnName("role")
             .HasConversion(
@@ -48,10 +51,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.ToTable(t => t.HasCheckConstraint("ck_users_role", "role IN ('USER','ADMIN')"));
 
         b.Property(x => x.Active).HasColumnName("active").IsRequired();
-
         b.Property(x => x.FriendCount).HasColumnName("friend_count").IsRequired();
 
-        // relationships
         b.HasMany(x => x.Accounts)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)

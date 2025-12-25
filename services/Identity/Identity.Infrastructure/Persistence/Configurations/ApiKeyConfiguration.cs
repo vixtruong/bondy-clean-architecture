@@ -1,4 +1,5 @@
 ﻿using Identity.Domain.Entities;
+using Identity.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,22 +19,23 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
 
         b.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
 
-        b.OwnsOne(x => x.KeyHash, h =>
-        {
-            h.Property(p => p.Value).HasColumnName("key_hash").HasMaxLength(64).IsRequired();
-        });
-        b.HasIndex("key_hash").IsUnique();
+        b.Property(x => x.KeyHash)
+            .HasConversion(
+                v => v.Value,
+                v => HashedValue.FromPersisted(v))
+            .HasColumnName("key_hash")
+            .IsRequired();
 
-        b.OwnsOne(x => x.Prefix, p =>
-        {
-            p.Property(v => v.Value).HasColumnName("prefix").HasMaxLength(12).IsRequired();
-        });
-        b.HasIndex("prefix").IsUnique();
+        b.HasIndex(x => x.KeyHash).IsUnique();
+
+
+        b.Property(x => x.Prefix).HasColumnName("prefix");
+        b.HasIndex(x => x.Prefix).IsUnique();
 
         b.Property(x => x.ExpiresAt).HasColumnName("expires_at");
         b.Property(x => x.Active).HasColumnName("active").IsRequired();
 
         b.HasIndex(x => new { x.Active, x.ExpiresAt }).HasDatabaseName("idx_api_keys_active");
-        b.HasIndex("prefix").HasDatabaseName("idx_api_keys_prefix");
+        b.HasIndex(x => x.KeyHash).HasDatabaseName("idx_api_keys_prefix");
     }
 }

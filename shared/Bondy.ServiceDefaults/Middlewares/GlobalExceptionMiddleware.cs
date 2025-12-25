@@ -1,20 +1,25 @@
-﻿
-using System.Text.Json;
-using Bondy.ServiceDefaults.Contracts;
-using Bondy.ServiceDefaults.Errors;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
+using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Constants;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Bondy.ServiceDefaults.Middlewares;
 
 public sealed class GlobalExceptionMiddleware : IMiddleware
 {
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private readonly JsonSerializerOptions _jsonOptions;
 
-    public GlobalExceptionMiddleware(ILogger<GlobalExceptionMiddleware> logger)
+    public GlobalExceptionMiddleware(
+        ILogger<GlobalExceptionMiddleware> logger,
+        IOptions<JsonOptions> jsonOptions)
     {
         _logger = logger;
+        _jsonOptions = jsonOptions.Value.JsonSerializerOptions;
     }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -26,31 +31,43 @@ public sealed class GlobalExceptionMiddleware : IMiddleware
         catch (Exception ex)
         {
             var traceId = context.TraceIdentifier;
+            var err = MapException(ex, traceId);
 
-            _logger.LogError(ex, "Unhandled exception. TraceId={TraceId}", traceId);
+            if (err.Type != ErrorType.Validation)
+                _logger.LogError(ex, "Unhandled exception. TraceId={TraceId} Code={Code} Type={Type}", traceId, err.Code, err.Type);
+            else
+                _logger.LogDebug("Validation exception suppressed. TraceId={TraceId} Code={Code}", traceId, err.Code);
 
-            // Map exception -> Error (tuỳ bạn mở rộng)
-            var err = ex switch
-            {
-                ArgumentException aex => Error.Validation("validation.argument", aex.Message),
-                UnauthorizedAccessException uex => Error.Unauthorized("auth.unauthorized", uex.Message),
-                _ => Error.Failure("server.error", "Unexpected error")
-            };
-
-            var status = ErrorMapping.ToStatusCode(err.Type);
-
-            context.Response.StatusCode = status;
+            context.Response.StatusCode = err.Type.ToStatusCode();
             context.Response.ContentType = "application/json";
 
             var payload = new ApiResponse(
                 Success: false,
-                Code: null,
+                Code: err.Code,
                 Data: null,
-                Error: new ApiError(err.Code, err.Message, err.Type.ToString(), err.Meta),
-                TraceId: traceId
+                Error: err,
+                Message: err.Message
             );
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+            await context.Response.WriteAsync(JsonSerializer.Serialize(payload, _jsonOptions));
         }
+    }
+
+    private static Error MapException(Exception ex, string traceId)
+    {
+        var baseErr = ex switch
+        {
+            ArgumentException aex => Error.Validation(ErrorCodes.Validation.Argument, aex.Message),
+            UnauthorizedAccessException uex => Error.Unauthorized(ErrorCodes.Auth.Unauthorized, uex.Message),
+            _ => Error.Failure(ErrorCodes.Server.Error, "Unexpected error")
+        };
+
+        var meta = baseErr.Meta is null
+            ? new Dictionary<string, object?>()
+            : new Dictionary<string, object?>(baseErr.Meta);
+
+        meta["traceId"] = traceId;
+
+        return baseErr with { Meta = meta };
     }
 }

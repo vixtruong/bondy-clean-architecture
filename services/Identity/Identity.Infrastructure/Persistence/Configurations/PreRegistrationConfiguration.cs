@@ -1,4 +1,5 @@
 ﻿using Identity.Domain.Entities;
+using Identity.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,12 +17,17 @@ public sealed class PreRegistrationConfiguration : IEntityTypeConfiguration<PreR
         b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
         b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
 
-        b.OwnsOne(x => x.Email, e =>
-        {
-            e.Property(p => p.Value).HasColumnName("email").IsRequired();
-        });
-        b.HasIndex("email").IsUnique();
+        // Email as scalar column
+        b.Property(x => x.Email)
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v))
+            .HasColumnName("email")
+            .IsRequired();
 
+        b.HasIndex(x => x.Email)
+            .IsUnique()
+            .HasDatabaseName("ux_pre_registrations_email");
+
+        // Name as owned (nhiều cột)
         b.OwnsOne(x => x.Name, n =>
         {
             n.Property(p => p.FirstName).HasColumnName("first_name").IsRequired();
@@ -32,9 +38,10 @@ public sealed class PreRegistrationConfiguration : IEntityTypeConfiguration<PreR
         b.Property(x => x.Dob).HasColumnName("dob").IsRequired();
         b.Property(x => x.Gender).HasColumnName("gender");
 
-        b.OwnsOne(x => x.PasswordHash, h =>
-        {
-            h.Property(p => p.Value).HasColumnName("password_hash").IsRequired();
-        });
+        // PasswordHash as scalar column
+        b.Property(x => x.PasswordHash)
+            .HasConversion(v => v.Value, v => HashedValue.FromPersisted(v))
+            .HasColumnName("password_hash")
+            .IsRequired();
     }
 }

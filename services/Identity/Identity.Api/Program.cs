@@ -15,7 +15,9 @@ namespace Identity.Api
 
             builder.AddSerilogLogging();
 
-            builder.Services.AddControllers();
+            builder.Services
+                .AddControllers()
+                .AddServiceValidation();
 
             builder.Services.AddServiceSwagger();
 
