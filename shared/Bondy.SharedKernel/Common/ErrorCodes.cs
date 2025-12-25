@@ -37,4 +37,21 @@ public static class ErrorCodes
     {
         public const string TemplateMissingData = "mail.tempalte_missingdata";
     }
+
+    public static class User
+    {
+        public const string EmailAlreadyExist = "user.email_already_exists";
+    }
+
+    public static class PreRegistration
+    {
+        public const string NotFound = "pre_registration.not_found";
+        public const string OtpNotFound = "pre_registration.otp_not_found";
+        public const string OtpInactive = "pre_registration.otp_inactive";
+        public const string OtpExpired = "pre_registration.otp_expired";
+        public const string OtpLocked = "pre_registration.otp_locked";
+        public const string OtpInvalid = "pre_registration.otp_invalid";
+    }
+
+
 }

@@ -7,6 +7,8 @@ namespace Identity.Application.Abstractions.Repositories;
 
 public interface IUserRepository
 {
+    Task<User> AddAsync(User user);
+
     Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl);
 
     Task<User?> GetByEmailAsync(Email email);
@@ -18,4 +20,6 @@ public interface IUserRepository
     Task<List<User>> SearchByEmailContainsAsync(string emailPart);
 
     Task<PagedResult<UserBasicResponse>> GetAllBasicProfilesAsync(int pageNumber, int pageSize);
+
+    Task<bool> ExistByEmailAsync(Email email);
 }

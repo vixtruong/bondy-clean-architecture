@@ -16,6 +16,14 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
     {
     }
 
+    public async Task<User> AddAsync(User user)
+    {
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+
+        return user;
+    }
+
     public async Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl)
     {
         return await _db.Users
@@ -28,6 +36,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
     {
         return _db.Users
             .AsNoTracking()
+            .Include(u => u.Accounts)
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
@@ -87,5 +96,10 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
                 u.AvatarUrl,
                 u.FriendCount
             ));
+    }
+
+    public async Task<bool> ExistByEmailAsync(Email email)
+    {
+        return await _db.Users.AnyAsync(u => u.Email == email);
     }
 }

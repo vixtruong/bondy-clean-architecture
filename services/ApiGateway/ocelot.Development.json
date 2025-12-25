@@ -1,6 +1,19 @@
 {
   "Routes": [
     {
+      "UpstreamPathTemplate": "/identity/api/v1/auth/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/v1/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8081
+        }
+      ],
+      "SwaggerKey": "identity"
+    },
+    {
       "UpstreamPathTemplate": "/identity/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "DownstreamPathTemplate": "/{everything}",
@@ -34,10 +47,8 @@
         "AllowedScopes": []
       }
     }
-    
   ],
-
   "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:7500"
+    "BaseUrl": "http://localhost:8080"
   }
 }

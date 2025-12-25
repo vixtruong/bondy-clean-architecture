@@ -40,15 +40,15 @@ public sealed class OtpCode : AggregateRoot
 
     public bool IsExpired(DateTime utcNow) => utcNow >= ExpiresAt;
 
-    public void IncreaseAttempts(DateTime utcNow)
-    {
-        Attempts++;
-        UpdatedAt = utcNow;
-    }
-
     public void Deactivate(DateTime utcNow)
     {
         Active = false;
-        UpdatedAt = utcNow;
     }
+
+    public void IncreaseAttempts(DateTime utcNow, int maxAttempts = 5)
+    {
+        Attempts++;
+        if (Attempts >= maxAttempts) Active = false;
+    }
+
 }

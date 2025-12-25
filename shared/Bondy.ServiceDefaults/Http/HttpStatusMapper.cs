@@ -11,6 +11,7 @@ namespace Bondy.ServiceDefaults.Http
             ErrorType.Conflict => 409,
             ErrorType.Unauthorized => 401,
             ErrorType.Forbidden => 403,
+            ErrorType.BadRequest => 400,
             _ => 500
         };
     }

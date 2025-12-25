@@ -3,12 +3,13 @@
     public enum ErrorType
     {
         None = 0,
-        Validation = 1,
-        NotFound = 2,
-        Conflict = 3,
-        Unauthorized = 4,
-        Forbidden = 5,
-        Failure = 6
+        BadRequest = 1,
+        Validation = 2,
+        NotFound = 3,
+        Conflict = 4,
+        Unauthorized = 5,
+        Forbidden = 6,
+        Failure = 7
     }
 
     public sealed record Error(
@@ -38,5 +39,9 @@
 
         public static Error Failure(string code, string message, IReadOnlyDictionary<string, object?>? meta = null)
             => new(code, message, ErrorType.Failure, meta);
+
+        public static Error BadRequest(string code, string message, IReadOnlyDictionary<string, object?>? meta = null)
+            => new(code, message, ErrorType.BadRequest, meta);
+
     }
 }

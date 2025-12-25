@@ -29,7 +29,7 @@ public sealed class User : AggregateRoot
     public User(
         Email email,
         PersonName name,
-        DateTime createdAtUtc,
+        DateTime createdAt,
         DateTime? dob = null,
         bool? gender = null,
         string? avatarUrl = null)
@@ -40,7 +40,7 @@ public sealed class User : AggregateRoot
         Gender = gender;
         AvatarUrl = avatarUrl;
 
-        CreatedAt = createdAtUtc;
+        CreatedAt = createdAt;
         Active = true;
         Role = UserRole.User;
         FriendCount = 0;

@@ -19,5 +19,7 @@ public static class SuccessCodes
         public const string Created = "user.created";
         public const string Updated = "user.updated";
         public const string Deleted = "user.deleted";
+        public const string RegisterInit = "user.register_init";
+        public const string RegisterVerify = "user.register_verify";
     }
 }

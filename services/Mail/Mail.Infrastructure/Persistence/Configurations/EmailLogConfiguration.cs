@@ -1,4 +1,5 @@
 ﻿using Mail.Domain.Entities;
+using Mail.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -31,7 +32,10 @@ public sealed class EmailLogConfiguration : IEntityTypeConfiguration<EmailLog>
                 .IsRequired();
         });
 
+        builder.Ignore(x => x.UpdatedAt);
+
         builder.Property(x => x.CreatedAt)
+            .HasConversion(Converter.UtcConverter)
             .IsRequired();
     }
 }

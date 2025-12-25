@@ -1,6 +1,5 @@
 using ApiGateway.Auth;
 using ApiGateway.Middlewares;
-using ApiGateway.Ocelot;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
@@ -14,7 +13,6 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Logging
         builder.Host.UseSerilog((ctx, services, cfg) =>
         {
             cfg.ReadFrom.Configuration(ctx.Configuration)
@@ -23,41 +21,33 @@ public class Program
                 .Enrich.WithProperty("Service", builder.Environment.ApplicationName);
         });
 
-        // Configs
         builder.Configuration
-            .AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", false, true)
-            .AddJsonFile($"swagger.{builder.Environment.EnvironmentName}.json", false, true);
+            .AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"swagger.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: true);
 
-        // JWT
         builder.Services.AddGatewayJwtAuth(builder.Configuration);
 
-        // Patch public/private routes
-        OcelotRoutePatcher.Patch(builder.Configuration, builder.Environment);
-
-        // Ocelot
-        builder.Services
-            .AddOcelot(builder.Configuration)
-            .AddPolly();
-
+        builder.Services.AddOcelot(builder.Configuration).AddPolly();
         builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
         builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
 
         var app = builder.Build();
 
-        app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();
+        app.Logger.LogInformation("API Gateway running. Env={Env} Urls={Urls}",
+            app.Environment.EnvironmentName,
+            builder.Configuration["ASPNETCORE_URLS"] ?? string.Join(", ", app.Urls));
 
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwaggerForOcelotUI(opt =>
-            {
-                opt.PathToSwaggerGenerator = "/swagger/docs";
-            });
+            app.UseSwaggerForOcelotUI(opt => opt.PathToSwaggerGenerator = "/swagger/docs");
         }
         else
         {
             app.UseHttpsRedirection();
         }
+
+        app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();
 
         app.UseAuthentication();
         app.UseAuthorization();
