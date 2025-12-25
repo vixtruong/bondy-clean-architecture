@@ -20,7 +20,7 @@ public sealed class TokenGenerator : ITokenGenerator
         _opt = opt.Value;
     }
 
-    public string GenerateAccessToken(User user)
+    public (string AccessToken, int AccessTokenMinutes) GenerateAccessToken(User user)
     {
         var now = _clock.Now;
 
@@ -43,6 +43,6 @@ public sealed class TokenGenerator : ITokenGenerator
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return (new JwtSecurityTokenHandler().WriteToken(token), _opt.AccessTokenMinutes);
     }
 }

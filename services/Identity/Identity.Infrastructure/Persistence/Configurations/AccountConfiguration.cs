@@ -1,5 +1,6 @@
 ﻿using Identity.Domain.Entities;
 using Identity.Domain.Enums;
+using Identity.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,8 +18,8 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
         b.HasIndex(x => x.UserId).HasDatabaseName("idx_accounts_user_id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
-        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
+        b.Ignore(x => x.UpdatedAt);
 
         b.Property(x => x.Provider)
             .HasColumnName("provider")

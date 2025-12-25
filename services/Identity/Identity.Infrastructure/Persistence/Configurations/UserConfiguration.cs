@@ -1,6 +1,7 @@
 ﻿using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
+using Identity.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,8 +16,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
-        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
+        b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasConversion(Converter.UtcConverter);
 
         // Email (1 cột) -> conversion để index/query dễ
         b.Property(x => x.Email)
@@ -37,7 +38,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         });
 
         b.Property(x => x.AvatarUrl).HasColumnName("avatar_url");
-        b.Property(x => x.Dob).HasColumnName("dob");
+        b.Property(x => x.Dob).HasColumnName("dob").HasConversion(Converter.UtcConverter);
         b.Property(x => x.Gender).HasColumnName("gender");
 
         b.Property(x => x.Role)

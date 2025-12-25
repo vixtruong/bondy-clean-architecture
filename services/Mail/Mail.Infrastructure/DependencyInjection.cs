@@ -28,7 +28,7 @@ public static class DependencyInjection
         services.AddDbContext<MailDbContext>(opt =>
         {
             var cs = configuration.GetConnectionString("MailDb");
-            opt.UseNpgsql(cs);
+            opt.UseNpgsql(cs).UseSnakeCaseNamingConvention();
         });
 
         services.AddScoped<IMailDbContext>(sp =>

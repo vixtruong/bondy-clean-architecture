@@ -39,6 +39,5 @@ public sealed class RefreshToken : AggregateRoot
 
         Revoked = true;
         RevokedAt = now;
-        UpdatedAt = now;
     }
 }

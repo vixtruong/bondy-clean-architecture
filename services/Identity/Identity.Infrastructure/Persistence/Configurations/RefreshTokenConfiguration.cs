@@ -1,5 +1,6 @@
 ﻿using Identity.Domain.Entities;
 using Identity.Domain.ValueObjects;
+using Identity.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -17,8 +18,8 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
         b.HasIndex(x => x.UserId).HasDatabaseName("idx_refresh_tokens_user_id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
-        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
+        b.Ignore(x => x.UpdatedAt);
 
         // TokenHash (1 cột) -> conversion
         b.Property(x => x.TokenHash)
@@ -30,7 +31,7 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
         b.HasIndex(x => x.TokenHash).HasDatabaseName("idx_refresh_tokens_token_hash");
 
         b.Property(x => x.Revoked).HasColumnName("revoked").IsRequired();
-        b.Property(x => x.RevokedAt).HasColumnName("revoked_at");
-        b.Property(x => x.ExpiresAt).HasColumnName("expires_at").IsRequired();
+        b.Property(x => x.RevokedAt).HasColumnName("revoked_at").HasConversion(Converter.UtcConverter);
+        b.Property(x => x.ExpiresAt).HasColumnName("expires_at").HasConversion(Converter.UtcConverter).IsRequired();
     }
 }

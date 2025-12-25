@@ -1,5 +1,6 @@
 ﻿using Identity.Domain.Entities;
 using Identity.Domain.Enums;
+using Identity.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,8 +15,8 @@ public sealed class OtpCodeConfiguration : IEntityTypeConfiguration<OtpCode>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
-        b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
+        b.Ignore(x => x.UpdatedAt);
 
         // subject_type VARCHAR(20)
         b.Property(x => x.SubjectType)
@@ -42,7 +43,7 @@ public sealed class OtpCodeConfiguration : IEntityTypeConfiguration<OtpCode>
             h.Property(p => p.Value).HasColumnName("code_hash").IsRequired();
         });
 
-        b.Property(x => x.ExpiresAt).HasColumnName("expires_at").IsRequired();
+        b.Property(x => x.ExpiresAt).HasColumnName("expires_at").HasConversion(Converter.UtcConverter).IsRequired();
         b.Property(x => x.Attempts).HasColumnName("attempts").IsRequired();
         b.Property(x => x.Active).HasColumnName("active").IsRequired();
 

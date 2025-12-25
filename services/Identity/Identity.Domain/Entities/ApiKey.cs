@@ -9,7 +9,7 @@ public sealed class ApiKey : AggregateRoot
     public HashedValue KeyHash { get; private set; } = default!;
     public string Prefix { get; private set; } = default!;
 
-    public DateTimeOffset? ExpiresAt { get; private set; }
+    public DateTime? ExpiresAt { get; private set; }
     public bool Active { get; private set; } = true;
 
     private ApiKey() { }
@@ -18,8 +18,8 @@ public sealed class ApiKey : AggregateRoot
         string name,
         HashedValue keyHash,
         string prefix,
-        DateTimeOffset? expiresAt,
-        DateTimeOffset createdAt)
+        DateTime? expiresAt,
+        DateTime createdAt)
     {
         Name = name;
         KeyHash = keyHash;
@@ -28,15 +28,14 @@ public sealed class ApiKey : AggregateRoot
         Active = true;
 
         // base dùng DateTime -> lưu UTC
-        CreatedAt = createdAt.UtcDateTime;
+        CreatedAt = createdAt;
     }
 
-    public bool IsExpired(DateTimeOffset now)
+    public bool IsExpired(DateTime now)
         => ExpiresAt.HasValue && now >= ExpiresAt.Value;
 
-    public void Disable(DateTimeOffset now)
+    public void Disable(DateTime now)
     {
         Active = false;
-        UpdatedAt = now.UtcDateTime;
     }
 }
