@@ -12,10 +12,10 @@
         }
       ],
       "SwaggerKey": "identity",
-      //"AuthenticationOptions": {
-      //  "AuthenticationProviderKey": "Bearer",
-      //  "AllowedScopes": []
-      //}
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "UpstreamPathTemplate": "/mail/{everything}",
@@ -28,11 +28,11 @@
           "Port": 8082
         }
       ],
-      "SwaggerKey": "mail"
-      //"AuthenticationOptions": {
-      //  "AuthenticationProviderKey": "Bearer",
-      //  "AllowedScopes": []
-      //}
+      "SwaggerKey": "mail",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     }
     
   ],
