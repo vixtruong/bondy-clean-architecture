@@ -15,10 +15,26 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
-        b.Ignore(x => x.UpdatedAt);
+        b.Property(x => x.CreatedAt)
+            .HasColumnName("created_at")
+            .HasConversion(Converter.UtcConverter)
+            .IsRequired();
 
-        b.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+        b.Property(x => x.UpdatedAt)
+            .HasColumnName("last_used_at")
+            .HasConversion(Converter.UtcConverter);
+
+        b.Property(x => x.KeyId)
+            .HasColumnName("key_id")
+            .HasMaxLength(50)
+            .IsRequired();
+
+        b.HasIndex(x => x.KeyId).IsUnique();
+
+        b.Property(x => x.Name)
+            .HasColumnName("name")
+            .HasMaxLength(100)
+            .IsRequired();
 
         b.Property(x => x.KeyHash)
             .HasConversion(
@@ -29,14 +45,41 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
 
         b.HasIndex(x => x.KeyHash).IsUnique();
 
+        b.Property(x => x.Owner)
+            .HasColumnName("owner")
+            .HasMaxLength(100)
+            .IsRequired();
 
-        b.Property(x => x.Prefix).HasColumnName("prefix");
-        b.HasIndex(x => x.Prefix).IsUnique();
+        b.Property(x => x.AllowedPaths)
+            .HasColumnName("allowed_paths")
+            .HasMaxLength(500);
 
-        b.Property(x => x.ExpiresAt).HasColumnName("expires_at").HasConversion(Converter.UtcConverter);
-        b.Property(x => x.Active).HasColumnName("active").IsRequired();
+        b.Property(x => x.RateLimitPlanId)
+            .HasColumnName("rate_limit_plan_id");
 
-        b.HasIndex(x => new { x.Active, x.ExpiresAt }).HasDatabaseName("idx_api_keys_active");
-        b.HasIndex(x => x.KeyHash).HasDatabaseName("idx_api_keys_prefix");
+        b.Property(x => x.ExpiresAt)
+            .HasColumnName("expires_at")
+            .HasConversion(Converter.UtcConverter);
+
+        b.Property(x => x.IsActive)
+            .HasColumnName("is_active")
+            .IsRequired();
+
+        b.HasIndex(x => new { x.IsActive, x.ExpiresAt })
+            .HasDatabaseName("idx_api_keys_active_exp");
+
+        b.OwnsMany(x => x.Scopes, sb =>
+        {
+            sb.ToTable("api_key_scopes");
+
+            sb.WithOwner().HasForeignKey("api_key_id");
+
+            sb.Property(s => s.Value)
+                .HasColumnName("scope")
+                .HasMaxLength(500)
+                .IsRequired();
+
+            sb.HasKey("api_key_id", nameof(Scope.Value));
+        });
     }
 }

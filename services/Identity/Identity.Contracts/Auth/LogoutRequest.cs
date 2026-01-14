@@ -1,10 +1,7 @@
 ﻿namespace Identity.Contracts.Auth;
 
-public class RefreshTokenRequest
+public class LogoutRequest
 {
     public long UserId { get; set; }
-
-    public string Token { get; set; } = null!;
-
     public string SessionId { get; set; } = null!;
 }

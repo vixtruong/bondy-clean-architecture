@@ -10,12 +10,13 @@ using Mail.Application.Templating;
 using Mail.Domain.Entities;
 using Mail.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
 
 namespace Mail.Application.Services.Mail;
 
 public sealed class MailService : ApplicationServiceBase, IMailService
 {
+    #region Constructor
+
     private readonly IMailRepository _mail;
     private readonly ITemplateRenderer _renderer;
     private readonly ITemplateProvider _provider;
@@ -28,6 +29,10 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         _provider = mailProvider;
         _sender = sender;
     }
+
+    #endregion
+
+    #region Main Methods
 
     public async Task<Result> SendEmail(SendEmailDto dto)
     {
@@ -78,4 +83,6 @@ public sealed class MailService : ApplicationServiceBase, IMailService
             return Result.Failure(Error.Failure("Mail.SendFailed", "Failed to send email"));
         }
     }
+
+    #endregion
 }

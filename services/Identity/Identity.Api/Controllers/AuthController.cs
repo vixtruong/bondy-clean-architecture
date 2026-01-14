@@ -1,17 +1,20 @@
 ﻿using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Common;
 using Bondy.SharedKernel.Constants;
-using Identity.Api.Http;
 using Identity.Application.Services.Auth;
 using Identity.Contracts.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers
 {
     [ApiController]
+    [AllowAnonymous]
     [Route("api/v1/[controller]")]
     public class AuthController : ControllerBase
     {
+        #region Constructor
+
         private readonly IAuthService _service;
 
         public AuthController(IAuthService service)
@@ -19,6 +22,9 @@ namespace Identity.Api.Controllers
             _service = service;
         }
 
+        #endregion
+
+        #region Api Methods
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -30,7 +36,7 @@ namespace Identity.Api.Controllers
 
 
         [HttpPost("register/init")]
-            public async Task<IActionResult> RegisterInit([FromBody] RegisterRequest request)
+        public async Task<IActionResult> RegisterInit([FromBody] RegisterRequest request)
                 => this.ToActionResult(await _service.RegisterInit(request));
 
         [HttpPost("register/verify")]
@@ -42,18 +48,62 @@ namespace Identity.Api.Controllers
         {
             var rt = Request.Cookies["rt"];
             var uid = Request.Cookies["uid"];
+            var sessionId = Request.Cookies["sessionId"];
 
-            if (string.IsNullOrWhiteSpace(rt) || string.IsNullOrWhiteSpace(uid))
+            if (string.IsNullOrWhiteSpace(rt) || string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(sessionId))
                 return this.ToActionResult(Result.Failure<AuthResponse>(
                     Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid refresh info")));
 
-            var result = await _service.RefreshToken(new RefreshTokenRequest { Token = rt, UserId = long.Parse(uid) }
-            );
+            if (!long.TryParse(uid, out var userId))
+            {
+                return this.ToActionResult(Result.Failure<AuthResponse>(
+                    Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid user id format")));
+            }
+
+            var result = await _service.RefreshToken(
+                new RefreshTokenRequest
+                {
+                    Token = rt,
+                    UserId = userId,
+                    SessionId = sessionId,
+                });
 
             return this.AuthResponse(result);
         }
 
-        #region private
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var uid = Request.Cookies["uid"];
+            var sessionId = Request.Cookies["sessionId"];
+
+            if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(sessionId))
+                return this.ToActionResult(Result.Failure<AuthResponse>(
+                    Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid logout info")));
+
+            if (!long.TryParse(uid, out var userId))
+            {
+                return this.ToActionResult(Result.Failure<AuthResponse>(
+                    Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid user id format")));
+            }
+
+            var result = await _service.Logout(
+                new LogoutRequest
+                {
+                    UserId = userId,
+                    SessionId = sessionId
+                });
+
+            if (result.IsSuccess)
+                Response.ClearRefreshInfoCookies(Request);
+
+            return this.ToActionResult(result);
+        }
+
+
+        #endregion
+
+        #region Support Methods
 
         private IActionResult AuthResponse(Result<AuthTokens> result)
         {
@@ -63,9 +113,8 @@ namespace Identity.Api.Controllers
                     Request,
                     userId: result.Value!.UserId,
                     refreshTokenRaw: result.Value!.RefreshTokenRaw,
-                    days: AppConstant.RefreshTokenDays,
-                    path: "/identity/api/v1/auth/refresh"
-                );
+                    sessionId: result.Value!.SessionId,
+                    days: AppConstant.RefreshTokenDays);
 
                 return this.ToActionResult(Result.Success(
                     new AuthResponse

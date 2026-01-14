@@ -6,6 +6,7 @@ using Identity.Application.Abstractions.Security;
 using Identity.Infrastructure.Common.Clock;
 using Identity.Infrastructure.Common.Security;
 using Identity.Infrastructure.Integrations.Mail;
+using Identity.Infrastructure.Jobs.Migration;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,11 @@ public static class DependencyInjection
         services.AddDbContext<IdentityDbContext>(opt =>
         {
             var cs = configuration.GetConnectionString("IdentityDb");
-            opt.UseNpgsql(cs).UseSnakeCaseNamingConvention();
+            opt.UseNpgsql(cs, npsql =>
+                {
+                    npsql.MigrationsAssembly(typeof(DependencyInjection).Assembly.GetName().Name);
+                })
+                .UseSnakeCaseNamingConvention();
         });
 
         services.AddScoped<IIdentityDbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
@@ -54,6 +59,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOtpGenerator, OtpGenerator>();
+
+        services.AddHostedService<IdentityMigrationService>();
 
         return services;
     }

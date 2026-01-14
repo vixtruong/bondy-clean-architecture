@@ -10,4 +10,5 @@ public interface IAuthService
     Task<Result> RegisterInit(RegisterRequest req);
     Task<Result> RegisterVerify(VerifyOtpRequest req);
     Task<Result<AuthTokens>> RefreshToken(RefreshTokenRequest req);
+    Task<Result> Logout(LogoutRequest req);
 }

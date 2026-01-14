@@ -23,7 +23,7 @@ namespace Mail.Api
 
             var app = builder.Build();
 
-            app.UseBondyServiceDefaults(serviceName);
+            app.UseBondyServiceDefaults(builder, serviceName);
             
             app.MapControllers();
             app.Run();

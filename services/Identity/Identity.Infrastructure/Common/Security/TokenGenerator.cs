@@ -31,6 +31,11 @@ public sealed class TokenGenerator : ITokenGenerator
             new("role", user.Role.ToString().ToUpperInvariant())
         };
 
+        foreach (var scope in user.Scopes)
+        {
+            claims.Add(new Claim("scope", scope.Value));
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opt.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

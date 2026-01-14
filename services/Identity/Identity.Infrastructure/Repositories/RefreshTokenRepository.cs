@@ -20,10 +20,11 @@ public sealed class RefreshTokenRepository : RepositoryBase, IRefreshTokenReposi
         return token;
     }
 
-    public async Task<int> RevokeTokens(long userId, DateTime now)
+    public async Task<int> RevokeTokens(long userId, string sessionId, DateTime now)
     {
         return await _db.RefreshTokens
             .Where(t => t.UserId == userId
+                        && t.SessionId == sessionId
                         && !t.Revoked
                         && t.ExpiresAt > now)
             .ExecuteUpdateAsync(setters => setters
@@ -31,10 +32,10 @@ public sealed class RefreshTokenRepository : RepositoryBase, IRefreshTokenReposi
                 .SetProperty(t => t.Revoked, true));
     }
 
-    public async Task<List<RefreshToken>> GetActiveTokensByUserId(long userId, DateTime now)
+    public async Task<List<RefreshToken>> GetActiveTokensByUserIdAndSessionId(long userId, string sessionId, DateTime now)
     {
         return await _db.RefreshTokens
-            .Where(r => r.UserId == userId && r.RevokedAt == null && !r.Revoked && r.ExpiresAt > now)
+            .Where(r => r.UserId == userId && r.SessionId == sessionId && r.RevokedAt == null && !r.Revoked && r.ExpiresAt > now)
             .Include(r => r.User)
             .ToListAsync();
     }

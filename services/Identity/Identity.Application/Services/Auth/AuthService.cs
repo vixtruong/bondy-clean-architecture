@@ -8,6 +8,7 @@ using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Contracts.Auth;
+using Identity.Domain.Constants;
 using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
@@ -18,6 +19,8 @@ namespace Identity.Application.Services.Auth;
 
 public class AuthService : ApplicationServiceBase, IAuthService
 {
+    #region Constructor
+
     private readonly IUserRepository _users;
     private readonly IRefreshTokenRepository _refreshTokens;
     private readonly IHasher _hasher;
@@ -45,9 +48,13 @@ public class AuthService : ApplicationServiceBase, IAuthService
         _otpGenerator = otpGenerator;
     }
 
+    #endregion
+
+    #region Main Methods
+
     public async Task<Result<AuthTokens>> LoginAsync(LoginRequest request)
     {
-        var user = await _users.GetByEmailAsync(Email.FromPersisted(request.Email));
+        User? user = await _users.GetByEmailAsync(Email.FromPersisted(request.Email));
 
         if (user is null)
             return Result.Failure<AuthTokens>(
@@ -57,7 +64,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
             return Result.Failure<AuthTokens>(
                 Error.Forbidden(ErrorCodes.Auth.UserInactive, "User is inactive"));
 
-        var local = user.Accounts.FirstOrDefault(a => a.Provider == AuthProvider.Local);
+        Account? local = user.Accounts.FirstOrDefault(a => a.Provider == AuthProvider.Local);
         if (local?.PasswordHash is null)
             return Result.Failure<AuthTokens>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
@@ -67,7 +74,9 @@ public class AuthService : ApplicationServiceBase, IAuthService
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
 
         var accessTokenResult = _jwt.GenerateAccessToken(user);
-        var refreshToken = await GenerateRefreshToken(user.Id);
+
+        string newSessionId = Guid.NewGuid().ToString("N");
+        string refreshToken = await GenerateRefreshToken(user.Id, newSessionId);
 
         return Result.Success(
             new AuthTokens
@@ -75,7 +84,8 @@ public class AuthService : ApplicationServiceBase, IAuthService
                 UserId = user.Id,
                 AccessToken = accessTokenResult.AccessToken,
                 RefreshTokenRaw = refreshToken,
-                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes
+                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
+                SessionId = newSessionId
             },
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
@@ -163,6 +173,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
         var newUser = new User(
             preReg.Email,
             preReg.Name,
+            ScopeSets.UserScopes,
             now,
             preReg.Dob);
 
@@ -198,7 +209,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
     {
         var now = _clock.Now;
 
-        var tokens = await _refreshTokens.GetActiveTokensByUserId(req.UserId, now);
+        var tokens = await _refreshTokens.GetActiveTokensByUserIdAndSessionId(req.UserId, req.SessionId, now);
 
         var match = tokens.FirstOrDefault(r => _hasher.Verify(req.Token, r.TokenHash.Value));
 
@@ -206,7 +217,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
             return Result<AuthTokens>.Failure(Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid refresh info"));
 
         var accessTokenResult = _jwt.GenerateAccessToken(match.User);
-        var refreshToken = await GenerateRefreshToken(match.UserId);
+        var refreshToken = await GenerateRefreshToken(match.UserId, req.SessionId);
 
         return Result.Success(
             new AuthTokens
@@ -214,15 +225,24 @@ public class AuthService : ApplicationServiceBase, IAuthService
                 UserId = match.UserId,
                 AccessToken = accessTokenResult.AccessToken,
                 RefreshTokenRaw = refreshToken,
-                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes
+                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
+                SessionId = req.SessionId
             },
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
 
+    public async Task<Result> Logout(LogoutRequest req)
+    {
+        await _refreshTokens.RevokeTokens(req.UserId, req.SessionId, _clock.Now);
 
-    #region private
+        return Result.Success(SuccessCodes.Auth.LogoutSuccess);
+    }
 
-    private async Task<string> GenerateRefreshToken(long userId)
+    #endregion
+
+    #region Support Methods
+
+    private async Task<string> GenerateRefreshToken(long userId, string sessionId)
     {
         var now = _clock.Now;
 
@@ -233,11 +253,12 @@ public class AuthService : ApplicationServiceBase, IAuthService
 
         var newRefreshToken = new RefreshToken(
             userId,
+            sessionId,
             HashedValue.FromPersisted(tokenHash),
             now.AddDays(AppConstant.RefreshTokenDays),
             now);
 
-        await _refreshTokens.RevokeTokens(userId, now);
+        await _refreshTokens.RevokeTokens(userId, sessionId, now);
 
         await _refreshTokens.AddAsync(newRefreshToken);
 
