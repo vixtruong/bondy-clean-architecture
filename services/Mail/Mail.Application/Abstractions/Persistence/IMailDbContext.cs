@@ -5,7 +5,7 @@ namespace Mail.Application.Abstractions.Persistence
 {
     public interface IMailDbContext
     {
-        DbSet<EmailLog> EmailLogs { get; }
+        DbSet<EmailOutbox> EmailOutboxes { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

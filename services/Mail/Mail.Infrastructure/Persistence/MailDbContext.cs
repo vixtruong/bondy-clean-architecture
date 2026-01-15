@@ -8,7 +8,7 @@ namespace Mail.Infrastructure.Persistence
     {
         public MailDbContext(DbContextOptions<MailDbContext> options) : base(options) { }
 
-        public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
+        public DbSet<EmailOutbox> EmailOutboxes => Set<EmailOutbox>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

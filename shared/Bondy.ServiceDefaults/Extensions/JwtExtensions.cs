@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Bondy.SharedKernel.Authorization;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,7 +48,18 @@ public static class JwtExtensions
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            foreach (var scope in Scopes.All)
+            {
+                options.AddPolicy(scope, policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                    policy.RequireClaim("scope", scope);
+                });
+            }
+        });
+        
         return services;
     }
 }

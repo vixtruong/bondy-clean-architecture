@@ -22,4 +22,9 @@ public static class SuccessCodes
         public const string RegisterInit = "user.register_init";
         public const string RegisterVerify = "user.register_verify";
     }
+
+    public static class Mail
+    {
+        public const string Enqueued = "mail.enqueued";
+    }
 }

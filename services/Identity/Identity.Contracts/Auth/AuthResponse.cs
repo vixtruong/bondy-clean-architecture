@@ -15,5 +15,6 @@ public sealed class AuthTokens
     public int AccessTokenMinutes { get; init; }
     public long UserId { get; set; }
     public string RefreshTokenRaw { get; init; } = default!;
+    public string SessionId { get; init; } = default!;
 }
 

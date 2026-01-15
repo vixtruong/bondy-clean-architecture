@@ -17,15 +17,18 @@ public sealed class RefreshToken : AggregateRoot
 
     public User User { get; private set; } = default!;
 
+    public string SessionId { get; private set; } = default!;
+
     private RefreshToken() { }
 
-    public RefreshToken(long userId, HashedValue tokenHash, DateTime expiresAtUtc, DateTime createdAtUtc)
+    public RefreshToken(long userId, string sessionId, HashedValue tokenHash, DateTime expiresAtUtc, DateTime createdAtUtc)
     {
         UserId = userId;
         TokenHash = tokenHash;
         ExpiresAt = expiresAtUtc;
         CreatedAt = createdAtUtc;
         Revoked = false;
+        SessionId = sessionId;
     }
 
     public bool IsActive(DateTime utcNow) =>

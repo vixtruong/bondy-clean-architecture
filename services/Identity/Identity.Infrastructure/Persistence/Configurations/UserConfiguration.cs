@@ -16,12 +16,18 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("id");
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
-        b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasConversion(Converter.UtcConverter);
+        b.Property(x => x.CreatedAt)
+            .HasColumnName("created_at")
+            .HasConversion(Converter.UtcConverter)
+            .IsRequired();
 
-        // Email (1 cột) -> conversion để index/query dễ
+        b.Property(x => x.UpdatedAt)
+            .HasColumnName("updated_at")
+            .HasConversion(Converter.UtcConverter);
+
+        // Email
         b.Property(x => x.Email)
-            .HasConversion(v => v.Value, v => Email.FromPersisted(v)) // đổi Create nếu factory khác
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v))
             .HasColumnName("email")
             .IsRequired();
 
@@ -29,7 +35,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasDatabaseName("ux_users_email");
 
-        // PersonName (nhiều cột) -> owns one OK
+        // PersonName (ValueObject)
         b.OwnsOne(x => x.Name, n =>
         {
             n.Property(p => p.FirstName).HasColumnName("first_name").IsRequired();
@@ -41,6 +47,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.Dob).HasColumnName("dob").HasConversion(Converter.UtcConverter);
         b.Property(x => x.Gender).HasColumnName("gender");
 
+        // Role chỉ để grouping
         b.Property(x => x.Role)
             .HasColumnName("role")
             .HasConversion(
@@ -54,11 +61,29 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.Active).HasColumnName("active").IsRequired();
         b.Property(x => x.FriendCount).HasColumnName("friend_count").IsRequired();
 
+        // ===== USER SCOPES (JWT sẽ phát từ đây) =====
+        // ===== USER SCOPES (JWT sẽ phát từ đây) =====
+        b.OwnsMany(x => x.Scopes, sb =>
+        {
+            sb.ToTable("user_scopes");
+
+            sb.WithOwner().HasForeignKey("user_id");
+
+            sb.Property(s => s.Value)
+                .HasColumnName("scope")
+                .HasMaxLength(500)
+                .IsRequired();
+
+            sb.HasKey("user_id", nameof(Scope.Value));
+        });
+
+        // Accounts
         b.HasMany(x => x.Accounts)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // RefreshTokens
         b.HasMany(x => x.RefreshTokens)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)

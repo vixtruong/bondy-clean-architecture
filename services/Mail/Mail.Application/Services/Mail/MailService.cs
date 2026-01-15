@@ -7,15 +7,19 @@ using Mail.Application.Abstractions.Repositories;
 using Mail.Application.Abstractions.Templating;
 using Mail.Application.Mapper;
 using Mail.Application.Templating;
+using Mail.Domain.Constants;
 using Mail.Domain.Entities;
+using Mail.Domain.Enums;
 using Mail.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using System.Runtime.InteropServices;
+using System.Text.Json;
 
 namespace Mail.Application.Services.Mail;
 
 public sealed class MailService : ApplicationServiceBase, IMailService
 {
+    #region Constructor
+
     private readonly IMailRepository _mail;
     private readonly ITemplateRenderer _renderer;
     private readonly ITemplateProvider _provider;
@@ -29,10 +33,13 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         _sender = sender;
     }
 
+    #endregion
+
+    #region Main Methods
+
     public async Task<Result> SendEmail(SendEmailDto dto)
     {
         var now = _clock.Now;
-
         var purpose = dto.Purpose.ToDomain();
 
         var spec = TemplateCatalog.Get(purpose);
@@ -55,27 +62,55 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         var model = dto.Data.ToRenderModel();
         var html = _renderer.Render(layout, content, model);
 
-        var log = new EmailLog(purpose, Email.FromPersisted(dto.To), now);
-        await _mail.AddAsync(log);
+        var dedupKey = BuildDedupKey(purpose, dto);
+
+        var outbox = new EmailOutbox(
+            purpose,
+            Email.FromPersisted(dto.To),
+            spec.Subject,
+            JsonSerializer.Serialize(model),
+            html,
+            dedupKey,
+            now);
 
         try
         {
-            await _sender.SendHtmlAsync(dto.To, spec.Subject, html);
-
-            log.MarkSent(now);
-            await _mail.UpdateAsync(log);
-
-            _logger.LogInformation("Email sent. Purpose={Purpose}, To={To}, LogId={LogId}", purpose, dto.To, log.Id);
-            return Result.Success(successCode: "mail.sent");
+            await _mail.AddAsync(outbox);
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            // nếu bạn có MarkFailed/LastError thì set ở đây
-            log.MarkFailed();
-            await _mail.UpdateAsync(log);
-
-            _logger.LogError(ex, "Send email failed. Purpose={Purpose}, To={To}, LogId={LogId}", purpose, dto.To, log.Id);
-            return Result.Failure(Error.Failure("Mail.SendFailed", "Failed to send email"));
+            _logger.LogError("Email enqueued fail Purpose={Purpose}, To={To}, DedupTokenId={DedupTokenId}", purpose, dto.To, dto.DedupTokenId ?? "");
         }
+
+        _logger.LogInformation("Email enqueued. Purpose={Purpose}, To={To}, OutboxId={LogId}", purpose, dto.To, outbox.Id);
+
+        return Result.Success(SuccessCodes.Mail.Enqueued);
     }
+
+
+    #endregion
+
+    #region Support Methods
+
+    private static string BuildDedupKey(
+        EmailPurpose purpose,
+        SendEmailDto dto)
+    {
+        return purpose switch
+        {
+            EmailPurpose.Registration =>
+                MailDedupKey.Otp(dto.To, dto.Purpose.ToString(), dto.DedupTokenId!),
+
+            EmailPurpose.ResetPassword =>
+                MailDedupKey.Otp(dto.To, dto.Purpose.ToString(), dto.DedupTokenId!),
+
+            EmailPurpose.Welcome =>
+                MailDedupKey.Welcome(dto.DedupTokenId!),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(purpose), purpose, null)
+        };
+    }
+
+
+    #endregion
 }

@@ -17,4 +17,6 @@ public sealed class SendEmailDto
 
     [Required]
     public Dictionary<string, string> Data { get; set; } = new();
+
+    public string? DedupTokenId { get; set; }
 }

@@ -20,7 +20,7 @@ public class Program
 
         var app = builder.Build();
 
-        app.UseBondyServiceDefaults(serviceName);
+        app.UseBondyServiceDefaults(builder, serviceName);
 
         app.MapControllers();
 

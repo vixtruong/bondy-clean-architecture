@@ -11,12 +11,15 @@ public sealed class User : AggregateRoot
     public string? AvatarUrl { get; private set; }
 
     public DateTime? Dob { get; private set; }
-    public bool? Gender { get; private set; } // giữ đúng DB BOOLEAN; nếu đổi enum thì sửa kiểu + mapping
+    public bool? Gender { get; private set; }
 
     public UserRole Role { get; private set; } = UserRole.User;
     public bool Active { get; private set; } = true;
 
-    public int FriendCount { get; private set; } = 0;
+    public int FriendCount { get; private set; }
+
+    private readonly List<Scope> _scopes = new();
+    public IReadOnlyCollection<Scope> Scopes => _scopes;
 
     private readonly List<Account> _accounts = new();
     public IReadOnlyCollection<Account> Accounts => _accounts;
@@ -24,11 +27,12 @@ public sealed class User : AggregateRoot
     private readonly List<RefreshToken> _refreshTokens = new();
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
 
-    private User() { } // EF
+    private User() { }
 
     public User(
         Email email,
         PersonName name,
+        IEnumerable<Scope> scopes,
         DateTime createdAt,
         DateTime? dob = null,
         bool? gender = null,
@@ -40,54 +44,44 @@ public sealed class User : AggregateRoot
         Gender = gender;
         AvatarUrl = avatarUrl;
 
-        CreatedAt = createdAt;
-        Active = true;
         Role = UserRole.User;
-        FriendCount = 0;
-    }
-
-    public void SetAvatar(string? avatarUrl, DateTime utcNow)
-    {
-        AvatarUrl = avatarUrl;
-        UpdatedAt = utcNow;
-    }
-
-    public void SetProfile(PersonName name, DateTime? dob, bool? gender, DateTime utcNow)
-    {
-        Name = name;
-        Dob = dob;
-        Gender = gender;
-        UpdatedAt = utcNow;
-    }
-
-    public void Deactivate(DateTime utcNow)
-    {
-        Active = false;
-        UpdatedAt = utcNow;
-    }
-
-    public void Activate(DateTime utcNow)
-    {
         Active = true;
+        CreatedAt = createdAt;
+
+        AssignScopes(scopes);
+    }
+
+    private void AssignScopes(IEnumerable<Scope> scopes)
+    {
+        foreach (var scope in scopes)
+        {
+            if (_scopes.Any(s => s.Value == scope.Value))
+                continue;
+
+            _scopes.Add(scope);
+        }
+    }
+
+
+    public bool HasScope(string scope)
+        => _scopes.Any(s => s.Value == scope);
+
+    public void GrantScope(Scope scope, DateTime utcNow)
+    {
+        if (_scopes.Any(s => s.Value == scope.Value)) return;
+        _scopes.Add(scope);
+        UpdatedAt = utcNow;
+    }
+
+    public void RevokeScope(string scope, DateTime utcNow)
+    {
+        _scopes.RemoveAll(s => s.Value == scope);
         UpdatedAt = utcNow;
     }
 
     public void PromoteToAdmin(DateTime utcNow)
     {
         Role = UserRole.Admin;
-        UpdatedAt = utcNow;
-    }
-
-    public void IncreaseFriendCount(DateTime utcNow)
-    {
-        FriendCount++;
-        UpdatedAt = utcNow;
-    }
-
-    public void DecreaseFriendCount(DateTime utcNow)
-    {
-        if (FriendCount <= 0) return;
-        FriendCount--;
-        UpdatedAt = utcNow;
+        GrantScope(new Scope("admin:*"), utcNow);
     }
 }

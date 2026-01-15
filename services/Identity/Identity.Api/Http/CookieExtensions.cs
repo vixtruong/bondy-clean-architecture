@@ -1,46 +1,48 @@
-﻿namespace Identity.Api.Http;
-
-public static class CookieExtensions
+﻿public static class CookieExtensions
 {
+    private const string DefaultPath = "/";
+
     public static void SetRefreshInfoCookie(
         this HttpResponse response,
         HttpRequest request,
         long userId,
         string refreshTokenRaw,
-        int days,
-        string path)
+        string sessionId,
+        int days)
     {
         var isHttps = request.IsHttps;
-
         var sameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax;
 
-        response.Cookies.Append("rt", refreshTokenRaw, new CookieOptions
+        var options = new CookieOptions
         {
             HttpOnly = true,
             Secure = isHttps,
             SameSite = sameSite,
-            Path = path,
+            Path = DefaultPath,
             Expires = DateTimeOffset.UtcNow.AddDays(days)
-        });
+        };
 
-        response.Cookies.Append("uid", userId.ToString(), new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = isHttps,
-            SameSite = sameSite,
-            Path = path,
-            Expires = DateTimeOffset.UtcNow.AddDays(days)
-        });
+        response.Cookies.Append("rt", refreshTokenRaw, options);
+        response.Cookies.Append("uid", userId.ToString(), options);
+        response.Cookies.Append("sessionId", sessionId, options);
     }
 
-    public static void ClearRefreshTokenCookie(
+    public static void ClearRefreshInfoCookies(
         this HttpResponse response,
-        string path)
+        HttpRequest request)
     {
-        response.Cookies.Delete("rt", new CookieOptions
+        var isHttps = request.IsHttps;
+        var sameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax;
+
+        var options = new CookieOptions
         {
-            Path = path,
-            SameSite = SameSiteMode.None
-        });
+            Path = DefaultPath,
+            Secure = isHttps,
+            SameSite = sameSite
+        };
+
+        response.Cookies.Delete("rt", options);
+        response.Cookies.Delete("uid", options);
+        response.Cookies.Delete("sessionId", options);
     }
 }

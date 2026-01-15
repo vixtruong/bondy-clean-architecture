@@ -34,13 +34,13 @@ public static class ServiceDefaultsRegistrationExtensions
         return builder;
     }
 
-    public static WebApplication UseBondyServiceDefaults(this WebApplication app, string serviceName)
+    public static WebApplication UseBondyServiceDefaults(this WebApplication app, WebApplicationBuilder builder, string serviceName)
     {
 
         app.Logger.LogInformation("{Service} API running. Env={Env} Urls={Urls}",
             serviceName,
             app.Environment.EnvironmentName,
-            string.Join(", ", app.Urls));
+            builder.Configuration["ASPNETCORE_URLS"] ?? string.Join(", ", app.Urls));
 
         // Global exception
         app.UseMiddleware<GlobalExceptionMiddleware>();
