@@ -3,7 +3,8 @@
     public enum MailStatus
     {
         Pending = 0,
-        Sent = 1,
-        Failed = 2
+        Sending = 1,
+        Sent = 2,
+        Failed = 3
     }
 }

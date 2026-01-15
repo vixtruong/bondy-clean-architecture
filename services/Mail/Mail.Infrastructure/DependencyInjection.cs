@@ -8,6 +8,7 @@ using Mail.Infrastructure.Persistence;
 using Mail.Infrastructure.Persistence.Migrations;
 using Mail.Infrastructure.Repositories;
 using Mail.Infrastructure.Templating;
+using Mail.Infrastructure.Worker;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,6 +71,8 @@ public static class DependencyInjection
         });
 
         services.AddSingleton<ITemplateRenderer, ScribanTemplateRenderer>();
+
+        services.AddHostedService<MailOutboxWorker>();
 
         return services;
     }

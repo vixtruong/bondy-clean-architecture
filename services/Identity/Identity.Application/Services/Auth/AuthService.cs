@@ -8,6 +8,7 @@ using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Contracts.Auth;
+using Identity.Contracts.Otp;
 using Identity.Domain.Constants;
 using Identity.Domain.Entities;
 using Identity.Domain.Enums;
@@ -125,10 +126,11 @@ public class AuthService : ApplicationServiceBase, IAuthService
                     Purpose = EmailPurpose.Registration,
                     Data = new Dictionary<string, string>
                     {
-                        ["otp"] = otp,
+                        ["otp"] = otp.CodeRaw,
                         ["firstName"] = preReg.Name.FirstName,
                         ["expiresMinutes"] = AppConstant.OtpMinutes.ToString()
-                    }
+                    },
+                    DedupTokenId = otp.Id.ToString()
                 });
         }
         catch (Exception ex)
@@ -190,7 +192,8 @@ public class AuthService : ApplicationServiceBase, IAuthService
                 {
                     ["firstName"] = newUser.Name.FirstName,
                     ["email"] = newUser.Email.Value
-                }
+                },
+                DedupTokenId = newUser.Id.ToString()
             });
         }
         catch (Exception ex)
@@ -265,7 +268,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
         return tokenRaw;
     }
 
-    private async Task<string> GenerateOtp(long subjectId, OtpSubjectType subjectType, OtpPurpose purpose)
+    private async Task<OtpCreatedResult> GenerateOtp(long subjectId, OtpSubjectType subjectType, OtpPurpose purpose)
     {
         var now = _clock.Now;
 
@@ -283,7 +286,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
 
         await _otpCodes.AddAsync(otp);
         
-        return otpRaw;
+        return new OtpCreatedResult(otp.Id, otpRaw);
     }
 
     private async Task<Result<OtpCode>> ValidateAndConsumeOtp(

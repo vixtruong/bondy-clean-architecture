@@ -24,7 +24,7 @@ namespace Identity.Api.Controllers
 
         #endregion
 
-        #region Api Methods
+        #region Api Actions
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)

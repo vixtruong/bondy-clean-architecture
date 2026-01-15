@@ -8,6 +8,7 @@ public static class DependencyInjection
     public static IServiceCollection AddMailApplication(this IServiceCollection services)
     {
         // Application services (use-cases)
+        services.AddScoped<MailDispatchService>();
         services.AddScoped<IMailService, MailService>();
 
         // Nếu bạn dùng MediatR/FluentValidation sau này thì add ở đây luôn

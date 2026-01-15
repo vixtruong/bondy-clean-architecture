@@ -48,8 +48,20 @@ public sealed class User : AggregateRoot
         Active = true;
         CreatedAt = createdAt;
 
-        _scopes.AddRange(scopes);
+        AssignScopes(scopes);
     }
+
+    private void AssignScopes(IEnumerable<Scope> scopes)
+    {
+        foreach (var scope in scopes)
+        {
+            if (_scopes.Any(s => s.Value == scope.Value))
+                continue;
+
+            _scopes.Add(scope);
+        }
+    }
+
 
     public bool HasScope(string scope)
         => _scopes.Any(s => s.Value == scope);
