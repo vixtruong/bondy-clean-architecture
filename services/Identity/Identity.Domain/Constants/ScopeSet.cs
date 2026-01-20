@@ -1,9 +1,9 @@
-﻿using Bondy.SharedKernel.Authorization;
+﻿using Bondy.SharedKernel.Constants.Authorization;
 using Identity.Domain.ValueObjects;
 
 namespace Identity.Domain.Constants;
 
-public static class ScopeSets
+public static class ScopeSet
 {
     // User
     private static readonly IReadOnlyCollection<string> User =

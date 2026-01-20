@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -19,6 +20,7 @@ namespace Identity.Infrastructure.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     key_id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    key_prefix = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     key_hash = table.Column<string>(type: "text", nullable: false),
                     owner = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     allowed_paths = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -63,8 +65,7 @@ namespace Identity.Infrastructure.Migrations
                     first_name = table.Column<string>(type: "text", nullable: false),
                     middle_name = table.Column<string>(type: "text", nullable: true),
                     last_name = table.Column<string>(type: "text", nullable: false),
-                    // <-- chỉnh: để dob nullable (pre-registration thường không bắt buộc DOB)
-                    dob = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    dob = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     gender = table.Column<bool>(type: "boolean", nullable: true),
                     password_hash = table.Column<string>(type: "text", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)

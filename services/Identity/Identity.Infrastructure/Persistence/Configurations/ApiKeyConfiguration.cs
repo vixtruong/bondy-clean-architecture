@@ -1,4 +1,5 @@
 ﻿using Identity.Domain.Entities;
+using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
 using Identity.Infrastructure.Persistence.Utils;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,11 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
             .HasMaxLength(100)
             .IsRequired();
 
+        b.Property(x => x.KeyPrefix)
+            .HasColumnName("key_prefix")
+            .HasMaxLength(100)
+            .IsRequired();
+
         b.Property(x => x.KeyHash)
             .HasConversion(
                 v => v.Value,
@@ -50,6 +56,11 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
             .HasMaxLength(100)
             .IsRequired();
 
+        b.Property(x => x.OwnerEmail)
+            .HasConversion(v => v.Value, v => Email.FromPersisted(v))
+            .HasColumnName("owner_email")
+            .IsRequired();
+
         b.Property(x => x.AllowedPaths)
             .HasColumnName("allowed_paths")
             .HasMaxLength(500);
@@ -58,8 +69,7 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
             .HasColumnName("rate_limit_plan_id");
 
         b.Property(x => x.ExpiresAt)
-            .HasColumnName("expires_at")
-            .HasConversion(Converter.UtcConverter);
+            .HasColumnName("expires_at");
 
         b.Property(x => x.IsActive)
             .HasColumnName("is_active")
@@ -81,5 +91,23 @@ public sealed class ApiKeyConfiguration : IEntityTypeConfiguration<ApiKey>
 
             sb.HasKey("api_key_id", nameof(Scope.Value));
         });
+
+        b.Property(x => x.RevokeAt)
+            .HasColumnName("revoke_at");
+
+
+        b.Property(x => x.RotateAt)
+            .HasColumnName("rotate_at");
+
+        b.Property(x => x.RevokeReason)
+            .HasColumnName("revoke_reason")
+            .HasMaxLength(50)
+            .HasConversion(
+                v => v != null ? v.ToString() : null,
+                v => v != null ? Enum.Parse<ApiKeyRevokeReason>(v) : null
+            );
+
+        b.HasIndex(x => x.RevokeReason)
+            .HasDatabaseName("idx_api_keys_revoke_reason");
     }
 }

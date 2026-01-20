@@ -1,4 +1,5 @@
 using ApiGateway.Auth;
+using ApiGateway.Clients.Identity;
 using ApiGateway.Middlewares;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
@@ -30,7 +31,18 @@ public class Program
         builder.Services.AddOcelot(builder.Configuration).AddPolly();
         builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
+        builder.Services.AddTransient<ApiKeyGatewayMiddleware>();
+        builder.Services.AddTransient<JwtGatewayMiddleware>();
         builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
+
+        builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
+        {
+            client.BaseAddress = new Uri(
+                builder.Configuration["Services:Identity"]!);
+
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
 
         var app = builder.Build();
 
@@ -47,12 +59,40 @@ public class Program
             app.UseHttpsRedirection();
         }
 
-        app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();
-
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseOcelot().Wait();
+        var ocelotPipeline = new OcelotPipelineConfiguration
+        {
+            PreAuthorizationMiddleware = async (ctx, next) =>
+            {
+                var apiKey =
+                    ctx.RequestServices.GetRequiredService<ApiKeyGatewayMiddleware>();
+
+                var jwt =
+                    ctx.RequestServices.GetRequiredService<JwtGatewayMiddleware>();
+
+                await apiKey.InvokeAsync(ctx);
+
+                if (!ctx.Request.Headers.TryGetValue("X-Auth-Type", out var t)
+                    || t != "apikey")
+                {
+                    await jwt.InvokeAsync(ctx);
+                }
+
+                await next();
+            },
+
+            PreErrorResponderMiddleware = async (ctx, next) =>
+            {
+                var errorMiddleware =
+                    ctx.RequestServices.GetRequiredService<GatewayErrorEnvelopeMiddleware>();
+
+                await errorMiddleware.InvokeAsync(ctx, next);
+            }
+        };
+
+        app.UseOcelot(ocelotPipeline).Wait();
 
         app.Run();
     }

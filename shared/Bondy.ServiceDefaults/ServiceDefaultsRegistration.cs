@@ -26,17 +26,19 @@ public static class ServiceDefaultsRegistrationExtensions
         builder.Services.AddServiceHealthChecks(builder.Configuration);
 
         // Auth
-         builder.Services.AddJwtAuth(builder.Configuration);
+        builder.Services.AddScopesAuthorization();
 
         // Middleware DI
         builder.Services.AddTransient<GlobalExceptionMiddleware>();
+        builder.Services.AddTransient<GatewayClaimsMiddleware>();
+
+        builder.Services.AddUserContext();
 
         return builder;
     }
 
     public static WebApplication UseBondyServiceDefaults(this WebApplication app, WebApplicationBuilder builder, string serviceName)
     {
-
         app.Logger.LogInformation("{Service} API running. Env={Env} Urls={Urls}",
             serviceName,
             app.Environment.EnvironmentName,
@@ -56,7 +58,9 @@ public static class ServiceDefaultsRegistrationExtensions
         }
 
         // AuthN/AuthZ
-        app.UseAuthentication();
+        //app.UseAuthentication();
+        app.UseMiddleware<GatewayClaimsMiddleware>();
+        app.UseGatewayIdentity();
         app.UseAuthorization();
 
         // Health

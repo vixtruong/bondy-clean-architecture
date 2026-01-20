@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Abstractions;
+using Bondy.SharedKernel.Configuration;
 using Mail.Application.Abstractions.Persistence;
 using Mail.Application.Abstractions.Persistence.Migrations;
 using Mail.Application.Abstractions.Repositories;
@@ -25,6 +26,8 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment env)
     {
+        services.Configure<AppConfigOptions>(configuration.GetSection(AppConfigOptions.SectionName));
+
         // DbContext
         services.AddDbContext<MailDbContext>(opt =>
         {

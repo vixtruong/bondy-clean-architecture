@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Repositories;
 
-internal class OtpCodeRepository : RepositoryBase, IOtpCodeRepository
+public class OtpCodeRepository : RepositoryBase, IOtpCodeRepository
 {
     public OtpCodeRepository(IIdentityDbContext db) : base(db)
     {

@@ -3,6 +3,7 @@ using System;
 using Identity.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Identity.Infrastructure.Migrations
 {
     [DbContext(typeof(IdentityDbContext))]
-    partial class IdentityDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260116085740_AddOwnerEmailApiKey")]
+    partial class AddOwnerEmailApiKey
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,11 +125,6 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoke_at");
 
-                    b.Property<string>("RevokeReason")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("revoke_reason");
-
                     b.Property<DateTimeOffset?>("RotateAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("rotate_at");
@@ -145,9 +143,6 @@ namespace Identity.Infrastructure.Migrations
                     b.HasIndex("KeyId")
                         .IsUnique()
                         .HasDatabaseName("ix_api_keys_key_id");
-
-                    b.HasIndex("RevokeReason")
-                        .HasDatabaseName("idx_api_keys_revoke_reason");
 
                     b.HasIndex("IsActive", "ExpiresAt")
                         .HasDatabaseName("idx_api_keys_active_exp");

@@ -14,6 +14,19 @@
       "SwaggerKey": "identity"
     },
     {
+      "UpstreamPathTemplate": "/identity/api/v1/apikeys/{everything}",
+      "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
+      "DownstreamPathTemplate": "/api/v1/apikeys/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 8081
+        }
+      ],
+      "SwaggerKey": "identity"
+    },
+    {
       "UpstreamPathTemplate": "/identity/{everything}",
       "UpstreamHttpMethod": [ "GET", "POST", "PUT", "DELETE" ],
       "DownstreamPathTemplate": "/{everything}",

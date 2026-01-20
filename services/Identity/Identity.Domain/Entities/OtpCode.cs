@@ -1,6 +1,7 @@
 ﻿using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
 using Bondy.SharedKernel.Common;
+using Identity.Domain.Constants;
 
 namespace Identity.Domain.Entities;
 
@@ -45,7 +46,7 @@ public sealed class OtpCode : AggregateRoot
         Active = false;
     }
 
-    public void IncreaseAttempts(DateTime utcNow, int maxAttempts = 5)
+    public void IncreaseAttempts(DateTime utcNow, int maxAttempts = OtpPolicy.MaxAttempts)
     {
         Attempts++;
         if (Attempts >= maxAttempts) Active = false;

@@ -3,6 +3,7 @@ using Bondy.Contracts.Enums.Mail;
 using Bondy.SharedKernel.Abstractions;
 using Bondy.SharedKernel.Application;
 using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Configuration;
 using Bondy.SharedKernel.Constants;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.Repositories;
@@ -14,11 +15,12 @@ using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
 namespace Identity.Application.Services.Auth;
 
-public class AuthService : ApplicationServiceBase, IAuthService
+public sealed class AuthService : ApplicationServiceBase, IAuthService
 {
     #region Constructor
 
@@ -31,13 +33,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
     private readonly IOtpCodeRepository _otpCodes;
     private readonly IOtpGenerator _otpGenerator;
 
-    public AuthService(
-        ILogger<AuthService> logger, 
-        IClock clock, 
-        IUserRepository users, 
-        IRefreshTokenRepository refreshTokens, 
-        IHasher hasher, 
-        ITokenGenerator jwt, IPreRegistrationRepository preRegistrations, IMailClient mailClient, IOtpCodeRepository otpCodes, IOtpGenerator otpGenerator) : base(logger, clock)
+    public AuthService(ILogger<AuthService> logger, IClock clock, IOptions<AppConfigOptions> options, IUserRepository users, IRefreshTokenRepository refreshTokens, IHasher hasher, ITokenGenerator jwt, IPreRegistrationRepository preRegistrations, IMailClient mailClient, IOtpCodeRepository otpCodes, IOtpGenerator otpGenerator) : base(logger, clock, options.Value)
     {
         _users = users;
         _refreshTokens = refreshTokens;
@@ -128,7 +124,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
                     {
                         ["otp"] = otp.CodeRaw,
                         ["firstName"] = preReg.Name.FirstName,
-                        ["expiresMinutes"] = AppConstant.OtpMinutes.ToString()
+                        ["expiresMinutes"] = OtpPolicy.ExpiryMinutes.ToString()
                     },
                     DedupTokenId = otp.Id.ToString()
                 });
@@ -175,7 +171,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
         var newUser = new User(
             preReg.Email,
             preReg.Name,
-            ScopeSets.UserScopes,
+            ScopeSet.UserScopes,
             now,
             preReg.Dob);
 
@@ -249,7 +245,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
     {
         var now = _clock.Now;
 
-        var bytes = RandomNumberGenerator.GetBytes(AppConstant.RefreshTokenByteLength);
+        var bytes = RandomNumberGenerator.GetBytes(TokenPolicy.RefreshTokenByteLength);
 
         var tokenRaw = Convert.ToHexString(bytes).ToLowerInvariant();
         var tokenHash = _hasher.Hash(tokenRaw);
@@ -258,7 +254,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
             userId,
             sessionId,
             HashedValue.FromPersisted(tokenHash),
-            now.AddDays(AppConstant.RefreshTokenDays),
+            now.AddDays(TokenPolicy.RefreshTokenDays),
             now);
 
         await _refreshTokens.RevokeTokens(userId, sessionId, now);
@@ -274,14 +270,14 @@ public class AuthService : ApplicationServiceBase, IAuthService
 
         await _otpCodes.DeactivateActiveOtp(subjectId, purpose, now);
 
-        var otpRaw = _otpGenerator.Generate(AppConstant.OtpLength);
+        var otpRaw = _otpGenerator.Generate(OtpPolicy.Length);
 
         var otp = new OtpCode(
             subjectType,
             subjectId,
             purpose,
             HashedValue.FromPersisted(_hasher.Hash(otpRaw)),
-            now.AddMinutes(AppConstant.OtpMinutes),
+            now.AddMinutes(OtpPolicy.ExpiryMinutes),
             now);
 
         await _otpCodes.AddAsync(otp);
@@ -323,7 +319,7 @@ public class AuthService : ApplicationServiceBase, IAuthService
                 ));
         }
 
-        if (otp.Attempts >= AppConstant.OtpMaxAttempts)
+        if (otp.Attempts >= OtpPolicy.MaxAttempts)
         {
             otp.Deactivate(now);
             await _otpCodes.UpdateAsync(otp);
@@ -339,12 +335,12 @@ public class AuthService : ApplicationServiceBase, IAuthService
         {
             otp.IncreaseAttempts(now);
 
-            if (otp.Attempts >= AppConstant.OtpMaxAttempts)
+            if (otp.Attempts >= OtpPolicy.MaxAttempts)
                 otp.Deactivate(now);
 
             await _otpCodes.UpdateAsync(otp);
 
-            var remaining = Math.Max(0, AppConstant.OtpMaxAttempts - otp.Attempts);
+            var remaining = Math.Max(0, OtpPolicy.MaxAttempts - otp.Attempts);
 
             var msg = remaining > 0
                 ? $"Incorrect OTP. Attempts remaining: {remaining}."

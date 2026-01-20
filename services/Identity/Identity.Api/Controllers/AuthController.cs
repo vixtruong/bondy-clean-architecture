@@ -3,6 +3,7 @@ using Bondy.SharedKernel.Common;
 using Bondy.SharedKernel.Constants;
 using Identity.Application.Services.Auth;
 using Identity.Contracts.Auth;
+using Identity.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -114,7 +115,7 @@ namespace Identity.Api.Controllers
                     userId: result.Value!.UserId,
                     refreshTokenRaw: result.Value!.RefreshTokenRaw,
                     sessionId: result.Value!.SessionId,
-                    days: AppConstant.RefreshTokenDays);
+                    days: TokenPolicy.RefreshTokenDays);
 
                 return this.ToActionResult(Result.Success(
                     new AuthResponse
