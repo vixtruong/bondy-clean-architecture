@@ -1,67 +1,61 @@
 ﻿using Bondy.SharedKernel.Constants.Authorization;
-using Identity.Domain.ValueObjects;
+using Identity.Domain.ValueObjects; // Scope
 
 namespace Identity.Domain.Constants;
 
 public static class ScopeSet
 {
-    // User
-    private static readonly IReadOnlyCollection<string> User =
-    [
-        Scopes.ProfileRead,
-        Scopes.ProfileUpdate,
-        Scopes.EmailVerify,
+    // helper
+    private static IEnumerable<string> GetScopesByPrefixes(params string[] prefixes)
+    {
+        if (prefixes.Length == 0) return [];
 
-        Scopes.AuthLogin,
-        Scopes.AuthRefresh,
-        Scopes.AuthLogout,
-        Scopes.AuthRegister,
+        var all = Scopes.All;
 
-        Scopes.PostsRead,
-        Scopes.PostsCreate,
-        Scopes.PostsUpdate,
-        Scopes.PostsDelete,
+        return all.Where(s =>
+        {
+            foreach (var p in prefixes)
+            {
+                if (p.EndsWith("*"))
+                {
+                    var trimmed = p.Substring(0, p.Length - 1);
+                    if (s.StartsWith(trimmed, StringComparison.OrdinalIgnoreCase)) return true;
+                }
+                else
+                {
+                    if (s.StartsWith(p, StringComparison.OrdinalIgnoreCase)) return true;
+                }
+            }
+            return false;
+        });
+    }
 
-        Scopes.PaymentsCreate,
-        Scopes.PaymentsRead,
-    ];
+    private static IReadOnlyCollection<Scope> ToScopeCollection(IEnumerable<string> seq) =>
+        seq.Distinct(StringComparer.OrdinalIgnoreCase)
+           .Select(s => new Scope(s))
+           .ToArray();
 
+    // USER
     public static IReadOnlyCollection<Scope> UserScopes =>
-        User.Select(s => new Scope(s)).ToArray();
+        ToScopeCollection(GetScopesByPrefixes("profile.", "auth.", "posts.", "payments."));
 
+    // ADMIN
+    public static IReadOnlyCollection<Scope> AdminScopes
+    {
+        get
+        {
+            var adminPrefixes = new[] { "admin." };
+            var combined = GetScopesByPrefixes(adminPrefixes)
+                .Concat(UserScopes.Select(s => s.Value));
+            return ToScopeCollection(combined);
+        }
+    }
 
-    // Admin
-    private static readonly IReadOnlyCollection<string> Admin =
-    [
-        // kế thừa toàn bộ user
-        ..User,
-
-        Scopes.AdminUsersRead,
-        Scopes.AdminUsersManage,
-        Scopes.AdminSettingsManage,
-
-        Scopes.PaymentsRefund
-    ];
-
-    public static IReadOnlyCollection<Scope> AdminScopes =>
-        Admin.Select(s => new Scope(s)).ToArray();
-
-
-    private static readonly IReadOnlyCollection<string> Partner =
-    [
-        Scopes.PostsRead,
-        Scopes.WebhookReceive,
-        Scopes.PartnerIntegration
-    ];
-
+    // Partner
     public static IReadOnlyCollection<Scope> PartnerScopes =>
-        Partner.Select(s => new Scope(s)).ToArray();
+        ToScopeCollection(GetScopesByPrefixes("posts.", "webhook.", "partner."));
 
-    private static readonly IReadOnlyCollection<string> Internal =
-    [
-        Scopes.InternalAll
-    ];
-
+    // Internal (wildcard example)
     public static IReadOnlyCollection<Scope> InternalScopes =>
-        Internal.Select(s => new Scope(s)).ToArray();
+        ToScopeCollection(GetScopesByPrefixes("internal.*"));
 }

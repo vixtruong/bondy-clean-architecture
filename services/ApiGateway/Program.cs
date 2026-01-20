@@ -1,6 +1,7 @@
 using ApiGateway.Auth;
 using ApiGateway.Clients.Identity;
 using ApiGateway.Middlewares;
+using ApiGateway.Middlewares.Auth;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
@@ -31,18 +32,18 @@ public class Program
         builder.Services.AddOcelot(builder.Configuration).AddPolly();
         builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
-        builder.Services.AddTransient<ApiKeyGatewayMiddleware>();
-        builder.Services.AddTransient<JwtGatewayMiddleware>();
-        builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
+        // register middlewares as transient or scoped
+        //builder.Services.AddTransient<ApiKeyGatewayMiddleware>();
+        //builder.Services.AddTransient<JwtGatewayMiddleware>();
+        //builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
 
         builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
         {
-            client.BaseAddress = new Uri(
-                builder.Configuration["Services:Identity"]!);
-
+            client.BaseAddress = new Uri(builder.Configuration["Services:Identity"]!);
             client.Timeout = TimeSpan.FromSeconds(5);
         });
 
+        builder.Services.AddHttpContextAccessor();
 
         var app = builder.Build();
 
@@ -60,39 +61,16 @@ public class Program
         }
 
         app.UseAuthentication();
-        app.UseAuthorization();
 
-        var ocelotPipeline = new OcelotPipelineConfiguration
-        {
-            PreAuthorizationMiddleware = async (ctx, next) =>
-            {
-                var apiKey =
-                    ctx.RequestServices.GetRequiredService<ApiKeyGatewayMiddleware>();
+        // Register our middlewares BEFORE UseOcelot so headers exist for Ocelot to forward
+        app.UseMiddleware<ApiKeyGatewayMiddleware>();
+        app.UseMiddleware<JwtGatewayMiddleware>();
 
-                var jwt =
-                    ctx.RequestServices.GetRequiredService<JwtGatewayMiddleware>();
+        // Error envelope should wrap Ocelot call, so register it before UseOcelot.
+        app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();
 
-                await apiKey.InvokeAsync(ctx);
-
-                if (!ctx.Request.Headers.TryGetValue("X-Auth-Type", out var t)
-                    || t != "apikey")
-                {
-                    await jwt.InvokeAsync(ctx);
-                }
-
-                await next();
-            },
-
-            PreErrorResponderMiddleware = async (ctx, next) =>
-            {
-                var errorMiddleware =
-                    ctx.RequestServices.GetRequiredService<GatewayErrorEnvelopeMiddleware>();
-
-                await errorMiddleware.InvokeAsync(ctx, next);
-            }
-        };
-
-        app.UseOcelot(ocelotPipeline).Wait();
+        // No Ocelot pipeline modifications here — Use default Ocelot pipeline
+        app.UseOcelot().Wait();
 
         app.Run();
     }

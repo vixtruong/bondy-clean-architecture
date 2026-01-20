@@ -24,7 +24,11 @@
           "Port": 8081
         }
       ],
-      "SwaggerKey": "identity"
+      "SwaggerKey": "identity",
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": []
+      }
     },
     {
       "UpstreamPathTemplate": "/identity/{everything}",

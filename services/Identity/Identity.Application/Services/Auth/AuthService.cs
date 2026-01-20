@@ -175,6 +175,8 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             now,
             preReg.Dob);
 
+        newUser.AddLocalAccount(preReg.PasswordHash, now);
+
         await _users.AddAsync(newUser);
         await _preRegistrations.RemoveAsync(preReg);
 

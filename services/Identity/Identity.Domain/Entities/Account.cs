@@ -16,9 +16,8 @@ public sealed class Account : AggregateRoot
 
     private Account() { }
 
-    public Account(long userId, AuthProvider provider, HashedValue? passwordHash, DateTime createdAtUtc)
+    public Account(AuthProvider provider, HashedValue? passwordHash, DateTime createdAtUtc)
     {
-        UserId = userId;
         Provider = provider;
         PasswordHash = passwordHash;
         CreatedAt = createdAtUtc;

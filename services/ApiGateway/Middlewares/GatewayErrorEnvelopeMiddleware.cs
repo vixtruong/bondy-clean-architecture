@@ -5,21 +5,22 @@ namespace ApiGateway.Middlewares;
 
 public sealed class GatewayErrorEnvelopeMiddleware
 {
-    public async Task InvokeAsync(
-        HttpContext context,
-        Func<Task> next)
+    private readonly RequestDelegate _next;
+
+    public GatewayErrorEnvelopeMiddleware(RequestDelegate next)
     {
-        await next();
+        _next = next;
+    }
 
-        if (context.Response.HasStarted)
-            return;
+    public async Task InvokeAsync(HttpContext context)
+    {
+        await _next(context);
 
-        if (context.Response.ContentLength.HasValue)
-            return;
+        if (context.Response.HasStarted) return;
+        if (context.Response.ContentLength.HasValue) return;
 
         var status = context.Response.StatusCode;
-        if (status < 400)
-            return;
+        if (status < 400) return;
 
         context.Response.ContentType = "application/json";
 

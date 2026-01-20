@@ -61,8 +61,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         b.Property(x => x.Active).HasColumnName("active").IsRequired();
         b.Property(x => x.FriendCount).HasColumnName("friend_count").IsRequired();
 
-        // ===== USER SCOPES (JWT sẽ phát từ đây) =====
-        // ===== USER SCOPES (JWT sẽ phát từ đây) =====
+        // ===== USER SCOPES =====
         b.OwnsMany(x => x.Scopes, sb =>
         {
             sb.ToTable("user_scopes");
@@ -79,9 +78,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 
         // Accounts
         b.HasMany(x => x.Accounts)
-            .WithOne(x => x.User)
-            .HasForeignKey(x => x.UserId)
+            .WithOne("User")
+            .HasForeignKey("UserId")
             .OnDelete(DeleteBehavior.Cascade);
+
 
         // RefreshTokens
         b.HasMany(x => x.RefreshTokens)

@@ -1,5 +1,6 @@
 ﻿using Bondy.ServiceDefaults.Extensions;
 using Bondy.ServiceDefaults.Middlewares;
+using Bondy.ServiceDefaults.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,13 +27,10 @@ public static class ServiceDefaultsRegistrationExtensions
         builder.Services.AddServiceHealthChecks(builder.Configuration);
 
         // Auth
-        builder.Services.AddScopesAuthorization();
+        builder.Services.AddGatewayAuth();
 
         // Middleware DI
         builder.Services.AddTransient<GlobalExceptionMiddleware>();
-        builder.Services.AddTransient<GatewayClaimsMiddleware>();
-
-        builder.Services.AddUserContext();
 
         return builder;
     }
@@ -58,9 +56,7 @@ public static class ServiceDefaultsRegistrationExtensions
         }
 
         // AuthN/AuthZ
-        //app.UseAuthentication();
-        app.UseMiddleware<GatewayClaimsMiddleware>();
-        app.UseGatewayIdentity();
+        app.UseAuthentication();
         app.UseAuthorization();
 
         // Health

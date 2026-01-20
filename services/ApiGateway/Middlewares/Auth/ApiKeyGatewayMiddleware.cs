@@ -1,28 +1,25 @@
 ﻿using ApiGateway.Clients.Identity;
 using System.Text.RegularExpressions;
 
-namespace ApiGateway.Middlewares;
+namespace ApiGateway.Middlewares.Auth;
 
 public sealed class ApiKeyGatewayMiddleware
 {
     private const string ApiKeyScheme = "ApiKey ";
-
+    private readonly RequestDelegate _next;
     private readonly IIdentityClient _identityClient;
 
-    public ApiKeyGatewayMiddleware(IIdentityClient identityClient)
+    public ApiKeyGatewayMiddleware(RequestDelegate next, IIdentityClient identityClient)
     {
+        _next = next;
         _identityClient = identityClient;
     }
 
-    public async Task InvokeAsync(
-        HttpContext context)
+    public async Task InvokeAsync(HttpContext context)
     {
-        // ─────────────────────────────────────────────
-        // Only handle ApiKey auth scheme
-        // ─────────────────────────────────────────────
         if (!context.Request.Headers.TryGetValue("Authorization", out var authHeader))
         {
-            //await next();
+            await _next(context);
             return;
         }
 
@@ -30,13 +27,10 @@ public sealed class ApiKeyGatewayMiddleware
 
         if (!auth.StartsWith(ApiKeyScheme, StringComparison.OrdinalIgnoreCase))
         {
-            //await next();
+            await _next(context);
             return;
         }
 
-        // ─────────────────────────────────────────────
-        // Extract raw API key
-        // ─────────────────────────────────────────────
         var rawKey = auth[ApiKeyScheme.Length..].Trim();
         if (string.IsNullOrWhiteSpace(rawKey))
         {
@@ -44,9 +38,6 @@ public sealed class ApiKeyGatewayMiddleware
             return;
         }
 
-        // ─────────────────────────────────────────────
-        // Validate API key via Identity service
-        // ─────────────────────────────────────────────
         var result = await _identityClient.ValidateApiKeyAsync(rawKey);
         if (!result.IsSuccess || result.Value is null)
         {
@@ -57,16 +48,13 @@ public sealed class ApiKeyGatewayMiddleware
         var apiKey = result.Value;
 
         if (!apiKey.IsActive ||
-            (apiKey.ExpiresAt.HasValue &&
-             apiKey.ExpiresAt.Value <= DateTimeOffset.UtcNow))
+            (apiKey.ExpiresAt.HasValue && apiKey.ExpiresAt.Value <= DateTimeOffset.UtcNow))
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             return;
         }
 
-        // ─────────────────────────────────────────────
-        // Path-based authorization
-        // ─────────────────────────────────────────────
+        // path-based
         if (!string.IsNullOrWhiteSpace(apiKey.AllowedPaths))
         {
             var allowedPaths = apiKey.AllowedPaths.Trim();
@@ -87,11 +75,7 @@ public sealed class ApiKeyGatewayMiddleware
             }
         }
 
-        // ─────────────────────────────────────────────
-        // Scope authorization (Gateway-level)
-        // RequiredScopes should be injected earlier
-        // (e.g. from Ocelot route config)
-        // ─────────────────────────────────────────────
+        // required_scopes có thể do config route set trước (optional)
         var requiredScopes =
             context.Items["required_scopes"] as IReadOnlyCollection<string>;
 
@@ -99,7 +83,6 @@ public sealed class ApiKeyGatewayMiddleware
 
         if (requiredScopes is null || requiredScopes.Count == 0)
         {
-            // No restriction → all scopes are effective
             effectiveScopes = apiKey.Scopes;
         }
         else
@@ -115,29 +98,25 @@ public sealed class ApiKeyGatewayMiddleware
             }
         }
 
-        // ─────────────────────────────────────────────
-        // 6. Strip internal headers (防 spoof)
-        // ─────────────────────────────────────────────
+        // Strip spoofable headers
         context.Request.Headers.Remove("X-Auth-Type");
         context.Request.Headers.Remove("X-Identity-Id");
         context.Request.Headers.Remove("X-Identity-Owner");
         context.Request.Headers.Remove("X-Effective-Scopes");
+        context.Request.Headers.Remove("X-Role");
 
-        // ─────────────────────────────────────────────
-        // 7. Attach identity + scopes for downstream services
-        // ─────────────────────────────────────────────
+        // Attach identity + scopes for downstream services (will be forwarded by Ocelot)
         context.Request.Headers["X-Auth-Type"] = "apikey";
         context.Request.Headers["X-Identity-Id"] = apiKey.Id.ToString();
         context.Request.Headers["X-Identity-Owner"] = apiKey.Owner;
-        context.Request.Headers["X-Effective-Scopes"] =
-            string.Join(',', effectiveScopes);
+        context.Request.Headers["X-Effective-Scopes"] = string.Join(',', effectiveScopes);
 
-        // Optional: keep in Items for other middlewares
+        // keep in Items for other middlewares in the same pipeline
         context.Items["identity:type"] = "apikey";
         context.Items["identity:id"] = apiKey.Id;
         context.Items["identity:owner"] = apiKey.Owner;
         context.Items["identity:scopes"] = effectiveScopes;
 
-        //await next();
+        await _next(context);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Common;
 using Bondy.SharedKernel.Constants;
+using Bondy.SharedKernel.Constants.Authorization;
 using Identity.Application.Services.Auth;
 using Identity.Contracts.Auth;
 using Identity.Domain.Constants;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Identity.Api.Controllers
 {
     [ApiController]
-    [AllowAnonymous]
+    //[AllowAnonymous]
     [Route("api/v1/[controller]")]
     public class AuthController : ControllerBase
     {
@@ -73,6 +74,7 @@ namespace Identity.Api.Controllers
         }
 
         [HttpPost("logout")]
+        [Authorize(Policy = Scopes.AuthLogout)]
         public async Task<IActionResult> Logout()
         {
             var uid = Request.Cookies["uid"];

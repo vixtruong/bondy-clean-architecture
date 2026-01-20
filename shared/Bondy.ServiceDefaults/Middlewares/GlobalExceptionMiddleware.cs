@@ -53,7 +53,7 @@ public sealed class GlobalExceptionMiddleware : IMiddleware
         }
     }
 
-    private static Error MapException(Exception ex, string traceId)
+    private static Error MapException(Exception ex, string traceId) 
     {
         var baseErr = ex switch
         {
