@@ -1,18 +1,28 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace ApiGateway.Middlewares;
 
-public sealed class GatewayErrorEnvelopeMiddleware : IMiddleware
+public sealed class GatewayErrorEnvelopeMiddleware
 {
-    public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+    private readonly RequestDelegate _next;
+
+    public GatewayErrorEnvelopeMiddleware(RequestDelegate next)
     {
-        await next(context);
+        _next = next;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        await _next(context);
 
         if (context.Response.HasStarted) return;
+        if (context.Response.ContentLength.HasValue) return;
 
         var status = context.Response.StatusCode;
-
         if (status < 400) return;
+
+        context.Response.ContentType = "application/json";
 
         var (code, message) = status switch
         {
@@ -24,8 +34,6 @@ public sealed class GatewayErrorEnvelopeMiddleware : IMiddleware
             504 => ("gateway.timeout", "Gateway timeout"),
             _ => ("gateway.error", "Gateway error")
         };
-
-        context.Response.ContentType = "application/json";
 
         var payload = new
         {
@@ -43,6 +51,10 @@ public sealed class GatewayErrorEnvelopeMiddleware : IMiddleware
             message
         };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+        var json = JsonSerializer.Serialize(payload);
+
+        context.Response.ContentLength = Encoding.UTF8.GetByteCount(json);
+
+        await context.Response.WriteAsync(json);
     }
 }

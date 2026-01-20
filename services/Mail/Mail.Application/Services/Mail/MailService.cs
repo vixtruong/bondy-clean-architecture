@@ -2,6 +2,7 @@
 using Bondy.SharedKernel.Abstractions;
 using Bondy.SharedKernel.Application;
 using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Configuration;
 using Bondy.SharedKernel.Constants;
 using Mail.Application.Abstractions.Repositories;
 using Mail.Application.Abstractions.Templating;
@@ -12,6 +13,7 @@ using Mail.Domain.Entities;
 using Mail.Domain.Enums;
 using Mail.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Mail.Application.Services.Mail;
@@ -25,17 +27,18 @@ public sealed class MailService : ApplicationServiceBase, IMailService
     private readonly ITemplateProvider _provider;
     private readonly IEmailSender _sender;
 
-    public MailService(ILogger<MailService> logger, IClock clock, IMailRepository mail, ITemplateRenderer mailRenderer, ITemplateProvider mailProvider, IEmailSender sender) : base(logger, clock)
-    {
-        _mail = mail;
-        _renderer = mailRenderer;
-        _provider = mailProvider;
-        _sender = sender;
-    }
 
     #endregion
 
     #region Main Methods
+
+    public MailService(ILogger<MailService> logger, IClock clock, IOptions<AppConfigOptions> options, IMailRepository mail, ITemplateRenderer renderer, ITemplateProvider provider, IEmailSender sender) : base(logger, clock, options.Value)
+    {
+        _mail = mail;
+        _renderer = renderer;
+        _provider = provider;
+        _sender = sender;
+    }
 
     public async Task<Result> SendEmail(SendEmailDto dto)
     {

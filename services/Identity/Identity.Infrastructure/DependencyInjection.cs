@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Abstractions;
+using Bondy.SharedKernel.Configuration;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
@@ -21,6 +22,8 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.Configure<AppConfigOptions>(configuration.GetSection(AppConfigOptions.SectionName));
+
         services.AddDbContext<IdentityDbContext>(opt =>
         {
             var cs = configuration.GetConnectionString("IdentityDb");
@@ -38,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPreRegistrationRepository, PreRegistrationRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.AddSingleton<ITokenGenerator, TokenGenerator>();
@@ -59,6 +63,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IOtpGenerator, OtpGenerator>();
+        services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
+        services.AddScoped<IApiKeyGenerator, ApiKeyGenerator>();
 
         services.AddHostedService<IdentityMigrationService>();
 

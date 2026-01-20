@@ -84,4 +84,35 @@ public sealed class User : AggregateRoot
         Role = UserRole.Admin;
         GrantScope(new Scope("admin:*"), utcNow);
     }
+
+    public void AddLocalAccount(
+        HashedValue passwordHash,
+        DateTime utcNow)
+    {
+        if (_accounts.Any(a => a.Provider == AuthProvider.Local))
+            return;
+
+        _accounts.Add(new Account(
+            AuthProvider.Local,
+            passwordHash,
+            utcNow));
+
+        UpdatedAt = utcNow;
+    }
+
+    public void AddSocialAccount(
+        AuthProvider provider,
+        DateTime utcNow)
+    {
+        if (_accounts.Any(a => a.Provider == provider))
+            return;
+
+        _accounts.Add(new Account(
+            provider,
+            passwordHash: null,
+            utcNow));
+
+        UpdatedAt = utcNow;
+    }
+
 }

@@ -12,10 +12,16 @@ public static class SwaggerExtensions
 
         services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Bondy Service API", Version = "v1" });
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Bondy Service API",
+                Version = "v1"
+            });
 
+            // ===== JWT =====
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
+                Description = "JWT Authorization using Bearer scheme",
                 Name = "Authorization",
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
@@ -23,6 +29,16 @@ public static class SwaggerExtensions
                 In = ParameterLocation.Header
             });
 
+            // ===== API KEY =====
+            c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+            {
+                Description = "API Key Authorization using X-API-KEY header",
+                Name = "X-API-KEY",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey
+            });
+
+            // ===== JWT OR API KEY =====
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
@@ -34,13 +50,25 @@ public static class SwaggerExtensions
                             Id = "Bearer"
                         }
                     },
-                    new List<string>()
+                    Array.Empty<string>()
+                },
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "ApiKey"
+                        }
+                    },
+                    Array.Empty<string>()
                 }
             });
         });
 
         return services;
     }
+
 
     public static WebApplication UseServiceSwagger(this WebApplication app)
     {

@@ -16,6 +16,15 @@ public static class ErrorCodes
         public const string Forbidden = "auth.forbidden";
         public const string InvalidCredentials = "auth.invalid_credentials";
         public const string UserInactive = "auth.user_inactive";
+
+        public const string ApiKeyMissing = "auth.apikey.missing";          // 401
+        public const string ApiKeyInvalid = "auth.apikey.invalid";          // 401
+        public const string ApiKeyRevoked = "auth.apikey.revoked";          // 403
+        public const string ApiKeyExpired = "auth.apikey.expired";          // 401
+        public const string ApiKeyScopeForbidden = "auth.apikey.scope_forbidden"; // 403
+        public const string ApiKeyPathForbidden = "auth.apikey.path_forbidden";   // 403
+        public const string ApiKeyEnvironmentMismatch = "auth.apikey.env_mismatch"; // 403
+        public const string ApiKeyClientTypeForbidden = "auth.apikey.client_type_forbidden"; // 40
     }
 
     public static class Common

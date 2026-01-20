@@ -1,5 +1,6 @@
 ﻿using Identity.Domain.ValueObjects;
 using Bondy.SharedKernel.Common;
+using Identity.Domain.Enums;
 
 namespace Identity.Domain.Entities;
 
@@ -9,36 +10,51 @@ public sealed class ApiKey : AggregateRoot
 
     public string Name { get; private set; } = default!;
 
+    public string KeyPrefix { get; private set; } = default!;
+
     public HashedValue KeyHash { get; private set; } = default!;
 
     public string Owner { get; private set; } = default!;
+
+    public Email OwnerEmail { get; private set; } = default!;
 
     public string? AllowedPaths { get; private set; }
 
     public int? RateLimitPlanId { get; private set; }
 
-    public DateTime? ExpiresAt { get; private set; }
+    public DateTimeOffset? ExpiresAt { get; private set; }
     public bool IsActive { get; private set; } = true;
 
     private readonly List<Scope> _scopes = new();
     public IReadOnlyCollection<Scope> Scopes => _scopes;
+    
+    public DateTimeOffset? RotateAt { get; private set; }
+    public DateTimeOffset? RevokeAt { get; private set; }
+
+    public DateTime? LastUsed => UpdatedAt;
+
+    public ApiKeyRevokeReason? RevokeReason { get; private set; }
 
     private ApiKey() { } // EF
     public ApiKey(
         string keyId,
         string name,
+        string keyPrefix,
         HashedValue keyHash,
         string owner,
+        Email ownerEmail,
         IEnumerable<Scope> scopes,
         string? allowedPaths,
         int? rateLimitPlanId,
-        DateTime? expiresAt,
+        DateTimeOffset? expiresAt,
         DateTime createdAt)
     {
         KeyId = keyId;
         Name = name;
+        KeyPrefix = keyPrefix;
         KeyHash = keyHash;
         Owner = owner;
+        OwnerEmail = ownerEmail;
         AllowedPaths = allowedPaths;
         RateLimitPlanId = rateLimitPlanId;
         ExpiresAt = expiresAt;
@@ -48,7 +64,7 @@ public sealed class ApiKey : AggregateRoot
         _scopes.AddRange(scopes);
     }
 
-    public bool IsExpired(DateTime now)
+    public bool IsExpired(DateTimeOffset now)
         => ExpiresAt.HasValue && now >= ExpiresAt.Value;
 
     public bool HasScope(string scope)
@@ -58,7 +74,6 @@ public sealed class ApiKey : AggregateRoot
     {
         if (string.IsNullOrWhiteSpace(AllowedPaths)) return true;
 
-        // ví dụ: regex list ngăn cách bởi ;
         return AllowedPaths
             .Split(';', StringSplitOptions.RemoveEmptyEntries)
             .Any(p => System.Text.RegularExpressions.Regex.IsMatch(path, p));
@@ -70,8 +85,25 @@ public sealed class ApiKey : AggregateRoot
         UpdatedAt = utcNow;
     }
 
-    public void Touch(DateTime utcNow)
+    public void Touch(DateTimeOffset utcNow)
     {
-        UpdatedAt = utcNow; // dùng làm LastUsed
+        UpdatedAt = utcNow.DateTime;
+    }
+
+    public void Revoke(ApiKeyRevokeReason reason, DateTimeOffset utcNow)
+    {
+        if (!IsActive)
+            return;
+
+        IsActive = false;
+        RevokeAt = utcNow;
+        RevokeReason = reason;
+        UpdatedAt = utcNow.DateTime;
+    }
+
+    public void Rotate(DateTimeOffset utcNow, TimeSpan gracePeriod)
+    {
+        RotateAt = utcNow.Add(gracePeriod);
+        UpdatedAt = utcNow.DateTime;
     }
 }

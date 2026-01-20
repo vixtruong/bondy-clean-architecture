@@ -15,10 +15,18 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).HasColumnName("id");
 
-        b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
-        b.HasIndex(x => x.UserId).HasDatabaseName("idx_accounts_user_id");
+        b.Property<long>("UserId")
+            .HasColumnName("user_id")
+            .IsRequired();
 
-        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasConversion(Converter.UtcConverter).IsRequired();
+        b.HasIndex("UserId")
+            .HasDatabaseName("idx_accounts_user_id");
+
+        b.Property(x => x.CreatedAt)
+            .HasColumnName("created_at")
+            .HasConversion(Converter.UtcConverter)
+            .IsRequired();
+
         b.Ignore(x => x.UpdatedAt);
 
         b.Property(x => x.Provider)
@@ -29,10 +37,10 @@ public sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .HasMaxLength(20)
             .IsRequired();
 
-        // PasswordHash VO nullable
         b.OwnsOne(x => x.PasswordHash, h =>
         {
-            h.Property(p => p.Value).HasColumnName("password_hash");
+            h.Property(p => p.Value)
+                .HasColumnName("password_hash");
         });
     }
 }

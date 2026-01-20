@@ -1,4 +1,5 @@
-﻿using Identity.Application.Services.Auth;
+﻿using Identity.Application.Services.ApiKey;
+using Identity.Application.Services.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Identity.Application;
@@ -9,6 +10,7 @@ public static class DependencyInjection
     {
         // Application services (use-cases)
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IApiKeyService, ApiKeyService>();
 
         // Nếu bạn dùng MediatR/FluentValidation sau này thì add ở đây luôn
         // services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));

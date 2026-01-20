@@ -1,5 +1,6 @@
 ﻿using Bondy.ServiceDefaults.Extensions;
 using Bondy.ServiceDefaults.Middlewares;
+using Bondy.ServiceDefaults.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,7 +27,7 @@ public static class ServiceDefaultsRegistrationExtensions
         builder.Services.AddServiceHealthChecks(builder.Configuration);
 
         // Auth
-         builder.Services.AddJwtAuth(builder.Configuration);
+        builder.Services.AddGatewayAuth();
 
         // Middleware DI
         builder.Services.AddTransient<GlobalExceptionMiddleware>();
@@ -36,7 +37,6 @@ public static class ServiceDefaultsRegistrationExtensions
 
     public static WebApplication UseBondyServiceDefaults(this WebApplication app, WebApplicationBuilder builder, string serviceName)
     {
-
         app.Logger.LogInformation("{Service} API running. Env={Env} Urls={Urls}",
             serviceName,
             app.Environment.EnvironmentName,

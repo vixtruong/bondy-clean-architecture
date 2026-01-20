@@ -1,5 +1,6 @@
-﻿
-namespace Bondy.SharedKernel.Authorization;
+﻿namespace Bondy.SharedKernel.Constants.Authorization;
+
+using System.Collections.Generic;
 
 public static class Scopes
 {
@@ -12,7 +13,7 @@ public static class Scopes
     public const string AuthLogin = "auth.login";
     public const string AuthRefresh = "auth.refresh";
     public const string AuthLogout = "auth.logout";
-    public const string AuthRegister = "auth.logout";
+    public const string AuthRegister = "auth.register";
 
     // Posts
     public const string PostsRead = "posts.read";
@@ -25,10 +26,16 @@ public static class Scopes
     public const string PaymentsRead = "payments.read";
     public const string PaymentsRefund = "payments.refund";
 
-    // Admin
+    // Admin User
     public const string AdminUsersRead = "admin.users.read";
     public const string AdminUsersManage = "admin.users.manage";
     public const string AdminSettingsManage = "admin.settings.manage";
+
+    // Admin Api keys
+    public const string AdminApiKeysCreate = "admin.apikeys.create";
+    public const string AdminApiKeysRotate = "admin.apikeys.rotate";
+    public const string AdminApiKeysRevoke = "admin.apikeys.revoke";
+    public const string AdminApiKeysUpdate = "admin.apikeys.update";
 
     // Internal / partner
     public const string InternalAll = "internal.*";
@@ -58,6 +65,11 @@ public static class Scopes
         AdminUsersRead,
         AdminUsersManage,
         AdminSettingsManage,
+
+        AdminApiKeysCreate,
+        AdminApiKeysRevoke,
+        AdminApiKeysRotate,
+        AdminApiKeysUpdate,
 
         InternalAll,
         WebhookReceive,

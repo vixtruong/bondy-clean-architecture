@@ -1,5 +1,7 @@
 using ApiGateway.Auth;
+using ApiGateway.Clients.Identity;
 using ApiGateway.Middlewares;
+using ApiGateway.Middlewares.Auth;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
@@ -30,7 +32,18 @@ public class Program
         builder.Services.AddOcelot(builder.Configuration).AddPolly();
         builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
-        builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
+        // register middlewares as transient or scoped
+        //builder.Services.AddTransient<ApiKeyGatewayMiddleware>();
+        //builder.Services.AddTransient<JwtGatewayMiddleware>();
+        //builder.Services.AddTransient<GatewayErrorEnvelopeMiddleware>();
+
+        builder.Services.AddHttpClient<IIdentityClient, IdentityClient>(client =>
+        {
+            client.BaseAddress = new Uri(builder.Configuration["Services:Identity"]!);
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
+        builder.Services.AddHttpContextAccessor();
 
         var app = builder.Build();
 
@@ -47,11 +60,16 @@ public class Program
             app.UseHttpsRedirection();
         }
 
+        app.UseAuthentication();
+
+        // Register our middlewares BEFORE UseOcelot so headers exist for Ocelot to forward
+        app.UseMiddleware<ApiKeyGatewayMiddleware>();
+        app.UseMiddleware<JwtGatewayMiddleware>();
+
+        // Error envelope should wrap Ocelot call, so register it before UseOcelot.
         app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
-
+        // No Ocelot pipeline modifications here — Use default Ocelot pipeline
         app.UseOcelot().Wait();
 
         app.Run();
