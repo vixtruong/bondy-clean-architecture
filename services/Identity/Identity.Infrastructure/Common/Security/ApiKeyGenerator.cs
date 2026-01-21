@@ -1,6 +1,7 @@
 ﻿using Bondy.SharedKernel.Infrastructure.Configuration;
 using Identity.Application.Abstractions.Security;
 using Identity.Domain.Constants;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
 namespace Identity.Infrastructure.Common.Security;
@@ -10,10 +11,10 @@ public class ApiKeyGenerator : IApiKeyGenerator
     private readonly IApiKeyHasher _hasher;
     private readonly AppConfigOptions _options;
 
-    public ApiKeyGenerator(IApiKeyHasher hasher, AppConfigOptions options)
+    public ApiKeyGenerator(IApiKeyHasher hasher, IOptions<AppConfigOptions> options)
     {
         _hasher = hasher;
-        _options = options;
+        _options = options.Value;
     }
 
     public ApiKeyGeneratedResult Generate(DateTimeOffset now)

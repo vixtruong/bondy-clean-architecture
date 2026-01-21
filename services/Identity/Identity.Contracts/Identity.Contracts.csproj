@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Application\Bondy.SharedKernel.Application.csproj" />
+  </ItemGroup>
+
 </Project>

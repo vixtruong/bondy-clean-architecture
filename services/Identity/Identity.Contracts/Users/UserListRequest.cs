@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Querying;
+﻿using Bondy.SharedKernel.Application.Querying;
 
 namespace Identity.Contracts.Users;
 

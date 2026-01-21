@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using Bondy.SharedKernel.Querying;
+﻿using Bondy.SharedKernel.Application.Querying;
+using System.Linq.Expressions;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Contracts.Users;
 using Microsoft.EntityFrameworkCore;

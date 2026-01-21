@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Abstractions;
+﻿using Bondy.SharedKernel.Domain.Abstractions;
 using Mail.Application.Abstractions.Repositories;
 using Mail.Application.Abstractions.Templating;
 using Mail.Domain.Entities;

@@ -1,6 +1,6 @@
 ﻿using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Application.Authorization;
-using Bondy.SharedKernel.Application.Common;
+using Bondy.SharedKernel.Domain.Common;
 using Identity.Api.Http;
 using Identity.Application.Services.Auth;
 using Identity.Contracts.Auth;

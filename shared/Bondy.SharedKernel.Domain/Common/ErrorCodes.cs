@@ -1,5 +1,5 @@
 ﻿
-namespace Bondy.SharedKernel.Application.Common;
+namespace Bondy.SharedKernel.Domain.Common;
 
 public static class ErrorCodes
 {
@@ -26,6 +26,8 @@ public static class ErrorCodes
         public const string ApiKeyPathForbidden = "auth.apikey.path_forbidden";   // 403
         public const string ApiKeyEnvironmentMismatch = "auth.apikey.env_mismatch"; // 403
         public const string ApiKeyClientTypeForbidden = "auth.apikey.client_type_forbidden"; // 40
+
+        public const string InvalidOAuth2Token = "auth.invalid_oauth2_token";
     }
 
     public static class Common

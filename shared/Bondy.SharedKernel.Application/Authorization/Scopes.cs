@@ -1,4 +1,5 @@
-﻿namespace Bondy.SharedKernel.Api.Authorization;
+﻿
+namespace Bondy.SharedKernel.Application.Authorization;
 
 public static class Scopes
 {

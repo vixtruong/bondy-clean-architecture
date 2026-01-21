@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Common;
+﻿using Bondy.SharedKernel.Domain.Common;
 using Mail.Domain.Enums;
 using Mail.Domain.ValueObjects;
 

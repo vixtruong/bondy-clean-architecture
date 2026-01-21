@@ -1,4 +1,4 @@
-﻿namespace Bondy.SharedKernel.Application.Common;
+﻿namespace Bondy.SharedKernel.Domain.Common;
 
 public enum ErrorType
 {
