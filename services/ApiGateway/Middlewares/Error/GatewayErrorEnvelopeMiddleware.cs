@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 
-namespace ApiGateway.Middlewares;
+namespace ApiGateway.Middlewares.Error;
 
 public sealed class GatewayErrorEnvelopeMiddleware
 {

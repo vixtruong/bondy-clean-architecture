@@ -2,7 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
-namespace ApiGateway.Auth;
+namespace ApiGateway.Extensions.Auth;
 
 public static class JwtAuthExtensions
 {

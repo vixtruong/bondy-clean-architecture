@@ -1,7 +1,7 @@
-using ApiGateway.Auth;
 using ApiGateway.Clients.Identity;
-using ApiGateway.Middlewares;
+using ApiGateway.Extensions.Auth;
 using ApiGateway.Middlewares.Auth;
+using ApiGateway.Middlewares.Error;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
