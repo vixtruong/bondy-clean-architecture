@@ -8,11 +8,11 @@ namespace Bondy.Contracts.Dtos.Mail;
 /// </summary>
 public sealed class SendEmailDto
 {
-    [Required]
+    [Required(ErrorMessage = "To Email is require.")]
     [EmailAddress]
     public string To { get; set; } = default!;
 
-    [Required]
+    [Required(ErrorMessage = "Purpose is require.")]
     public EmailPurpose Purpose { get; set; }
 
     [Required]

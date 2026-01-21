@@ -6,6 +6,7 @@ using Bondy.SharedKernel.Common;
 using Bondy.SharedKernel.Configuration;
 using Bondy.SharedKernel.Constants;
 using Identity.Application.Abstractions.Integrations;
+using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Contracts.Auth;
@@ -32,8 +33,10 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
     private readonly IMailClient _mailClient;
     private readonly IOtpCodeRepository _otpCodes;
     private readonly IOtpGenerator _otpGenerator;
+    private readonly IGoogleTokenVerifier _googleTokenVerifier;
+    private readonly ITempPasswordGenerator _tempPasswordGenerator;
 
-    public AuthService(ILogger<AuthService> logger, IClock clock, IOptions<AppConfigOptions> options, IUserRepository users, IRefreshTokenRepository refreshTokens, IHasher hasher, ITokenGenerator jwt, IPreRegistrationRepository preRegistrations, IMailClient mailClient, IOtpCodeRepository otpCodes, IOtpGenerator otpGenerator) : base(logger, clock, options.Value)
+    public AuthService(ILogger<AuthService> logger, IClock clock, IOptions<AppConfigOptions> options, IUserRepository users, IRefreshTokenRepository refreshTokens, IHasher hasher, ITokenGenerator jwt, IPreRegistrationRepository preRegistrations, IMailClient mailClient, IOtpCodeRepository otpCodes, IOtpGenerator otpGenerator, IGoogleTokenVerifier googleTokenVerifier, ITempPasswordGenerator tempPasswordGenerator) : base(logger, clock, options.Value)
     {
         _users = users;
         _refreshTokens = refreshTokens;
@@ -43,6 +46,8 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         _mailClient = mailClient;
         _otpCodes = otpCodes;
         _otpGenerator = otpGenerator;
+        _googleTokenVerifier = googleTokenVerifier;
+        _tempPasswordGenerator = tempPasswordGenerator;
     }
 
     #endregion
@@ -83,6 +88,86 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
                 RefreshTokenRaw = refreshToken,
                 AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
                 SessionId = newSessionId
+            },
+            successCode: SuccessCodes.Auth.LoginSuccess);
+    }
+
+    public async Task<Result<AuthTokens>> GoogleLoginAsync(GoogleLoginRequest req)
+    {
+        var now = _clock.Now;
+        var provider = AuthProvider.Google;
+
+        var payload = await _googleTokenVerifier.VerifyAsync(req.IdToken);
+        var email = Email.FromPersisted(payload.Email);
+
+        var user = await _users.GetByEmailAsync(email);
+
+        bool shouldSendWelcomeEmail = false;
+        string? tempPassword = null;
+
+        if (user is null)
+        {
+            user = new User(
+                email,
+                PersonName.FromPersisted(payload.GivenName, "", payload.FamilyName),
+                ScopeSet.UserScopes,
+                now,
+                avatarUrl: payload.Picture);
+
+            tempPassword = _tempPasswordGenerator.Generate();
+            var passwordHash = _hasher.Hash(tempPassword);
+
+            user.AddLocalAccount(
+                HashedValue.FromPersisted(passwordHash), now);
+
+            user.AddSocialAccount(provider, now);
+
+            shouldSendWelcomeEmail = true;
+
+            await _users.AddAsync(user);
+        }
+        else if (!user.HasAccount(provider))
+        {
+            user.AddSocialAccount(provider, now);
+            await _users.UpdateAsync(user);
+            shouldSendWelcomeEmail = true;
+        }
+
+        var accessTokenResult = _jwt.GenerateAccessToken(user);
+
+        var sessionId = Guid.NewGuid().ToString("N");
+        var refreshToken = await GenerateRefreshToken(user.Id, sessionId);
+
+        if (shouldSendWelcomeEmail)
+        {
+            var data = new Dictionary<string, string>
+            {
+                ["firstName"] = user.Name.FirstName,
+                ["provider"] = provider.ToString(),
+                ["email"] = user.Email.Value,
+                ["hasPassword"] = (tempPassword != null).ToString().ToLower(),
+                ["password"] = tempPassword != null
+                    ? tempPassword
+                    : "Your account already exists. We have successfully linked your Google login to it."
+            };
+
+            await SendEmail(new SendEmailDto
+            {
+                To = user.Email.Value,
+                Purpose = EmailPurpose.OAuth2Welcome,
+                Data = data,
+                DedupTokenId = user.Id.ToString()
+            });
+        }
+
+        return Result.Success(
+            new AuthTokens
+            {
+                UserId = user.Id,
+                AccessToken = accessTokenResult.AccessToken,
+                RefreshTokenRaw = refreshToken,
+                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
+                SessionId = sessionId
             },
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
@@ -180,25 +265,17 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         await _users.AddAsync(newUser);
         await _preRegistrations.RemoveAsync(preReg);
 
-        try
+        await SendEmail(new SendEmailDto
         {
-            await _mailClient.SendEmailAsync(new SendEmailDto
+            To = newUser.Email.Value,
+            Purpose = EmailPurpose.Welcome,
+            Data = new Dictionary<string, string>
             {
-                To = newUser.Email.Value,
-                Purpose = EmailPurpose.Welcome,
-                Data = new Dictionary<string, string>
-                {
-                    ["firstName"] = newUser.Name.FirstName,
-                    ["email"] = newUser.Email.Value
-                },
-                DedupTokenId = newUser.Id.ToString()
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Welcome mail failed for {Email}", newUser.Email.Value);
-        }
-
+                ["firstName"] = newUser.Name.FirstName,
+                ["email"] = newUser.Email.Value
+            },
+            DedupTokenId = newUser.Id.ToString()
+        });
 
         return Result.Success(
             value: new { message = "Email verified successfully." },
@@ -366,7 +443,17 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         return Result.Success(otp);
     }
 
-
+    private async Task SendEmail(SendEmailDto dto)
+    {
+        try
+        {
+            await _mailClient.SendEmailAsync(dto);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Welcome mail failed for {Email}", dto.To);
+        }
+    }
     #endregion
 
 }

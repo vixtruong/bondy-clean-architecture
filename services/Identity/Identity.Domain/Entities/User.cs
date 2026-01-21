@@ -115,4 +115,8 @@ public sealed class User : AggregateRoot
         UpdatedAt = utcNow;
     }
 
+    public bool HasAccount(AuthProvider provider)
+    {
+        return _accounts.Any(a => a.Provider == provider);
+    }
 }
