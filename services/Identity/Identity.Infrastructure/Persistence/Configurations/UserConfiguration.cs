@@ -40,7 +40,7 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         {
             n.Property(p => p.FirstName).HasColumnName("first_name").IsRequired();
             n.Property(p => p.MiddleName).HasColumnName("middle_name");
-            n.Property(p => p.LastName).HasColumnName("last_name").IsRequired();
+            n.Property(p => p.LastName).HasColumnName("last_name");
         });
 
         b.Property(x => x.AvatarUrl).HasColumnName("avatar_url");

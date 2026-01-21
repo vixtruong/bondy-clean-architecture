@@ -1,12 +1,14 @@
 ﻿using Bondy.SharedKernel.Abstractions;
 using Bondy.SharedKernel.Configuration;
 using Identity.Application.Abstractions.Integrations;
+using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Infrastructure.Common.Clock;
 using Identity.Infrastructure.Common.Security;
 using Identity.Infrastructure.Integrations.Mail;
+using Identity.Infrastructure.Integrations.OAuth2;
 using Identity.Infrastructure.Jobs.Migration;
 using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Repositories;
@@ -65,6 +67,9 @@ public static class DependencyInjection
         services.AddScoped<IOtpGenerator, OtpGenerator>();
         services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
         services.AddScoped<IApiKeyGenerator, ApiKeyGenerator>();
+
+        services.AddScoped<IGoogleTokenVerifier, GoogleTokenVerifier>();
+        services.AddScoped<ITempPasswordGenerator, TempPasswordGenerator>();
 
         services.AddHostedService<IdentityMigrationService>();
 

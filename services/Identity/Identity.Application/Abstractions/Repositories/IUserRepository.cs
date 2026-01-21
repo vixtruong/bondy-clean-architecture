@@ -8,6 +8,7 @@ namespace Identity.Application.Abstractions.Repositories;
 public interface IUserRepository
 {
     Task<User> AddAsync(User user);
+    Task UpdateAsync(User user);
 
     Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl);
 

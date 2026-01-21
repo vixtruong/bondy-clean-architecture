@@ -7,16 +7,16 @@ public sealed class PersonName : ValueObject
 {
     public string FirstName { get; }
     public string? MiddleName { get; }
-    public string LastName { get; }
+    public string? LastName { get; }
 
-    private PersonName(string firstName, string? middleName, string lastName)
+    private PersonName(string firstName, string? middleName, string? lastName)
     {
         FirstName = firstName;
         MiddleName = middleName;
         LastName = lastName;
     }
 
-    public static Result<PersonName> Create(string firstName, string? middleName, string lastName)
+    public static Result<PersonName> Create(string firstName, string? middleName, string? lastName)
     {
         if (string.IsNullOrWhiteSpace(firstName))
             return Result.Failure<PersonName>(
@@ -27,14 +27,14 @@ public sealed class PersonName : ValueObject
                 Error.Validation(ErrorCodes.Validation.Required, "Last name is required"));
 
         firstName = firstName.Trim();
-        lastName = lastName.Trim();
+        lastName = string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim();
 
         middleName = string.IsNullOrWhiteSpace(middleName) ? null : middleName.Trim();
 
         return Result.Success(new PersonName(firstName, middleName, lastName));
     }
 
-    public static PersonName FromPersisted(string firstName, string? middleName, string lastName)
+    public static PersonName FromPersisted(string firstName, string? middleName, string? lastName)
         => Create(firstName, middleName, lastName).ValueOrThrow();
 
     protected override IEnumerable<object?> GetEqualityComponents()

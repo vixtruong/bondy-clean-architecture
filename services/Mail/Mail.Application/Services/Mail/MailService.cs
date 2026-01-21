@@ -109,6 +109,9 @@ public sealed class MailService : ApplicationServiceBase, IMailService
 
             EmailPurpose.Welcome =>
                 MailDedupKey.Welcome(dto.DedupTokenId!),
+            
+            EmailPurpose.OAuth2Welcome =>
+                MailDedupKey.OAuth2Welcome(dto.DedupTokenId!),
 
             _ => throw new ArgumentOutOfRangeException(nameof(purpose), purpose, null)
         };

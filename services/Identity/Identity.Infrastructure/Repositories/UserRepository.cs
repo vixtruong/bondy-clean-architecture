@@ -24,6 +24,12 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
         return user;
     }
 
+    public async Task UpdateAsync(User user)
+    {
+        _db.Users.Update(user);
+        await _db.SaveChangesAsync();
+    }
+
     public async Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl)
     {
         return await _db.Users

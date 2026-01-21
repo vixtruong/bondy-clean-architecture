@@ -6,12 +6,13 @@
 		<b>{{ provider }}</b>.
 	</p>
 
+	{{ if hasPassword == "true" }}
 	<p>
-		For your convenience, we have also created a <b>local account</b> in our system.
+		For your convenience, we have also created a <b>local account</b>.
 		Here are your login details:
 	</p>
 
-	<div style="margin:16px 0; padding:12px; background:#f7f7f7; border:1px solid #ddd; border-radius:6px;">
+	<div style="margin:16px 0; padding:12px; background:#f7f7f7;">
 		<p>Email: <b>{{ email }}</b></p>
 		<p>
 			Temporary Password:
@@ -19,7 +20,15 @@
 		</p>
 	</div>
 
-	<p>⚠️ For your security, please change this password immediately after logging in.</p>
+	<p>⚠️ Please change your password after login.</p>
+	{{ else }}
+	<p style="margin-top:12px; padding:12px; background:#eef7ff; border-left:4px solid #2196f3;">
+		{{ password }}
+	</p>
+	{{ end }}
 
-	<p style="margin-top:32px;">Thank you,<br />The Bondy Team</p>
+	<p style="margin-top:32px;">
+		Thank you,<br />
+		The Bondy Team
+	</p>
 </div>

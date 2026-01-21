@@ -36,6 +36,14 @@ namespace Identity.Api.Controllers
             return this.AuthResponse(result);
         }
 
+        [HttpPost("google")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+        {
+            var result = await _service.GoogleLoginAsync(request);
+
+            return this.AuthResponse(result);
+        }
+
 
         [HttpPost("register/init")]
         public async Task<IActionResult> RegisterInit([FromBody] RegisterRequest request)
