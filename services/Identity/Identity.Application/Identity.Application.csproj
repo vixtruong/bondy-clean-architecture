@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\shared\Bondy.Contracts\Bondy.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Application\Bondy.SharedKernel.Application.csproj" />
     <ProjectReference Include="..\Identity.Contracts\Identity.Contracts.csproj" />
     <ProjectReference Include="..\Identity.Domain\Identity.Domain.csproj" />
   </ItemGroup>

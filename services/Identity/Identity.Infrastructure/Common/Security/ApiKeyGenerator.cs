@@ -1,4 +1,5 @@
-﻿using Identity.Application.Abstractions.Security;
+﻿using Bondy.SharedKernel.Infrastructure.Configuration;
+using Identity.Application.Abstractions.Security;
 using Identity.Domain.Constants;
 using System.Security.Cryptography;
 
@@ -7,14 +8,18 @@ namespace Identity.Infrastructure.Common.Security;
 public class ApiKeyGenerator : IApiKeyGenerator
 {
     private readonly IApiKeyHasher _hasher;
+    private readonly AppConfigOptions _options;
 
-    public ApiKeyGenerator(IApiKeyHasher hasher)
+    public ApiKeyGenerator(IApiKeyHasher hasher, AppConfigOptions options)
     {
         _hasher = hasher;
+        _options = options;
     }
 
-    public ApiKeyGeneratedResult Generate(string env, DateTimeOffset now)
+    public ApiKeyGeneratedResult Generate(DateTimeOffset now)
     {
+        var env = _options.Environment == "Production" ? ApiKeyPrefix.Live : ApiKeyPrefix.Test;
+
         var shortId = RandomNumberGenerator
             .GetBytes(4);
 

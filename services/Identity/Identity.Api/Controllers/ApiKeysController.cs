@@ -1,5 +1,5 @@
 ﻿using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Constants.Authorization;
+using Bondy.SharedKernel.Api.Authorization;
 using Identity.Application.Services.ApiKey;
 using Identity.Contracts.ApiKey;
 using Microsoft.AspNetCore.Authorization;

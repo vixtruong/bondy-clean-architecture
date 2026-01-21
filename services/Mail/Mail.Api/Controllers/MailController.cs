@@ -1,6 +1,5 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
 using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Common;
 using Mail.Application.Services.Mail;
 using Microsoft.AspNetCore.Mvc;
 

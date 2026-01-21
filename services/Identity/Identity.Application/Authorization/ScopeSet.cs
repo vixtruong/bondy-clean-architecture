@@ -1,7 +1,7 @@
-﻿using Bondy.SharedKernel.Constants.Authorization;
-using Identity.Domain.ValueObjects; // Scope
+﻿using Bondy.SharedKernel.Application.Authorization;
+using Identity.Domain.ValueObjects;
 
-namespace Identity.Domain.Constants;
+namespace Identity.Application.Authorization;
 
 public static class ScopeSet
 {
@@ -32,8 +32,8 @@ public static class ScopeSet
 
     private static IReadOnlyCollection<Scope> ToScopeCollection(IEnumerable<string> seq) =>
         seq.Distinct(StringComparer.OrdinalIgnoreCase)
-           .Select(s => new Scope(s))
-           .ToArray();
+            .Select(s => new Scope(s))
+            .ToArray();
 
     // USER
     public static IReadOnlyCollection<Scope> UserScopes =>

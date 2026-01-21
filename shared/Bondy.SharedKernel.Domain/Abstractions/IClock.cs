@@ -1,4 +1,5 @@
-﻿namespace Bondy.SharedKernel.Abstractions;
+﻿
+namespace Bondy.SharedKernel.Domain.Abstractions;
 
 public interface IClock
 {

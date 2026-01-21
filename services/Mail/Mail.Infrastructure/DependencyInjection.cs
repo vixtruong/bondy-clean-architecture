@@ -1,5 +1,5 @@
-﻿using Bondy.SharedKernel.Abstractions;
-using Bondy.SharedKernel.Configuration;
+﻿using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Infrastructure.Configuration;
 using Mail.Application.Abstractions.Persistence;
 using Mail.Application.Abstractions.Persistence.Migrations;
 using Mail.Application.Abstractions.Repositories;

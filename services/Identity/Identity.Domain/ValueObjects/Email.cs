@@ -1,6 +1,5 @@
-﻿using Bondy.SharedKernel.Common;
+﻿using Bondy.SharedKernel.Domain.Common;
 using System.Text.RegularExpressions;
-using Bondy.SharedKernel.Constants;
 
 namespace Identity.Domain.ValueObjects
 {

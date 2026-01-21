@@ -1,5 +1,5 @@
-﻿using Bondy.SharedKernel.Abstractions;
-using Bondy.SharedKernel.Configuration;
+﻿using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Infrastructure.Configuration;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Persistence;

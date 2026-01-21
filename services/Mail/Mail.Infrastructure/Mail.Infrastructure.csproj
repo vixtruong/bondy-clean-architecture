@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Infrastructure\Bondy.SharedKernel.Infrastructure.csproj" />
     <ProjectReference Include="..\Mail.Application\Mail.Application.csproj" />
   </ItemGroup>
 

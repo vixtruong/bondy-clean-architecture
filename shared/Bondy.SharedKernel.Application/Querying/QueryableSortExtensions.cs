@@ -1,4 +1,4 @@
-﻿namespace Bondy.SharedKernel.Querying
+﻿namespace Bondy.SharedKernel.Application.Querying
 {
     public static class QueryableSortExtensions
     {

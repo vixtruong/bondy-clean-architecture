@@ -1,14 +1,13 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
 using Bondy.Contracts.Enums.Mail;
-using Bondy.SharedKernel.Abstractions;
-using Bondy.SharedKernel.Application;
-using Bondy.SharedKernel.Common;
-using Bondy.SharedKernel.Configuration;
-using Bondy.SharedKernel.Constants;
+using Bondy.SharedKernel.Application.Base;
+using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Domain.Common;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
+using Identity.Application.Authorization;
 using Identity.Contracts.Auth;
 using Identity.Contracts.Otp;
 using Identity.Domain.Constants;
@@ -16,7 +15,6 @@ using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
 namespace Identity.Application.Services.Auth;
@@ -36,7 +34,17 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
     private readonly ITempPasswordGenerator _tempPasswordGenerator;
 
-    public AuthService(ILogger<AuthService> logger, IClock clock, IOptions<AppConfigOptions> options, IUserRepository users, IRefreshTokenRepository refreshTokens, IHasher hasher, ITokenGenerator jwt, IPreRegistrationRepository preRegistrations, IMailClient mailClient, IOtpCodeRepository otpCodes, IOtpGenerator otpGenerator, IGoogleTokenVerifier googleTokenVerifier, ITempPasswordGenerator tempPasswordGenerator) : base(logger, clock, options.Value)
+    public AuthService(ILogger<AuthService> logger, 
+        IClock clock, 
+        IUserRepository users, 
+        IRefreshTokenRepository refreshTokens, 
+        IHasher hasher, ITokenGenerator jwt, 
+        IPreRegistrationRepository preRegistrations, 
+        IMailClient mailClient, 
+        IOtpCodeRepository otpCodes, 
+        IOtpGenerator otpGenerator, 
+        IGoogleTokenVerifier googleTokenVerifier, 
+        ITempPasswordGenerator tempPasswordGenerator) : base(logger, clock)
     {
         _users = users;
         _refreshTokens = refreshTokens;

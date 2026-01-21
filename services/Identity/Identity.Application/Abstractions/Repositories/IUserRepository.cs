@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Querying;
+﻿using Bondy.SharedKernel.Application.Querying;
 using Identity.Contracts.Users;
 using Identity.Domain.Entities;
 using Identity.Domain.ValueObjects;

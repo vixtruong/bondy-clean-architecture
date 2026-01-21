@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\shared\Bondy.ServiceDefaults\Bondy.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel\Bondy.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Api\Bondy.SharedKernel.Api.csproj" />
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
     <ProjectReference Include="..\Identity.Infrastructure\Identity.Infrastructure.csproj" />
   </ItemGroup>

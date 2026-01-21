@@ -14,5 +14,8 @@
   <Project Path="services/Mail/Mail.Infrastructure/Mail.Infrastructure.csproj" Id="ea8f04bd-0f7c-41fa-a55c-32b8448a716c" />
   <Project Path="shared/Bondy.Contracts/Bondy.Contracts.csproj" />
   <Project Path="shared/Bondy.ServiceDefaults/Bondy.ServiceDefaults.csproj" />
-  <Project Path="shared/Bondy.SharedKernel/Bondy.SharedKernel.csproj" />
+  <Project Path="shared/Bondy.SharedKernel.Api/Bondy.SharedKernel.Api.csproj" Id="9584c265-546c-427e-96a5-7c3aa56e5fd5" />
+  <Project Path="shared/Bondy.SharedKernel.Application/Bondy.SharedKernel.Application.csproj" Id="0dad7c89-6d60-444c-b18e-ef57403c4577" />
+  <Project Path="shared/Bondy.SharedKernel.Domain/Bondy.SharedKernel.Domain.csproj" Id="cf5d4b63-5e4b-4a67-89a8-5ae6df1672e7" />
+  <Project Path="shared/Bondy.SharedKernel.Infrastructure/Bondy.SharedKernel.Infrastructure.csproj" Id="7aed5f6b-7c84-4dc6-bd5b-21df58115208" />
 </Solution>
