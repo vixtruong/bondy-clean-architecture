@@ -60,14 +60,14 @@ public sealed class JwtGatewayMiddleware
         context.Request.Headers.Remove("X-Auth-Type");
         context.Request.Headers.Remove("X-Identity-Id");
         context.Request.Headers.Remove("X-Identity-Owner");
-        context.Request.Headers.Remove("X-Effective-Scopes");
+        context.Request.Headers.Remove("X-Effective-ScopesAll");
         context.Request.Headers.Remove("X-Role");
 
         // Attach headers
         context.Request.Headers["X-Auth-Type"] = "jwt";
         context.Request.Headers["X-Identity-Id"] = identityId;
         context.Request.Headers["X-Identity-Owner"] = owner;
-        context.Request.Headers["X-Effective-Scopes"] = string.Join(',', scopes);
+        context.Request.Headers["X-Effective-ScopesAll"] = string.Join(',', scopes);
 
         if (!string.IsNullOrWhiteSpace(role))
         {

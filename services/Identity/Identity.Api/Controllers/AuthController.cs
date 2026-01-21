@@ -1,5 +1,5 @@
 ﻿using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Application.Authorization;
+using Bondy.SharedKernel.Application.Authorization.Scopes;
 using Bondy.SharedKernel.Domain.Common;
 using Identity.Api.Http;
 using Identity.Application.Services.Auth;
@@ -82,7 +82,6 @@ namespace Identity.Api.Controllers
         }
 
         [HttpPost("logout")]
-        [Authorize(Policy = Scopes.AuthLogout)]
         public async Task<IActionResult> Logout()
         {
             var uid = Request.Cookies["uid"];

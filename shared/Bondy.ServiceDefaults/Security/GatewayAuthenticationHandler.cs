@@ -43,7 +43,7 @@ public sealed class GatewayAuthenticationHandler
             return Task.FromResult(AuthenticateResult.Fail("Invalid gateway identity headers"));
         }
 
-        var scopesRaw = headers.TryGetValue("X-Effective-Scopes", out var s)
+        var scopesRaw = headers.TryGetValue("X-Effective-ScopesAll", out var s)
             ? s.ToString()
             : string.Empty;
 

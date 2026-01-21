@@ -11,6 +11,7 @@ public interface IIdentityDbContext
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<OtpCode> OtpCodes { get; }
     DbSet<ApiKey> ApiKeys { get; }
+    DbSet<Role> Roles { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

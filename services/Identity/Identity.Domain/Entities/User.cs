@@ -1,6 +1,7 @@
-﻿using Identity.Domain.Enums;
-using Identity.Domain.ValueObjects;
+﻿// Identity.Domain.Entities.User.cs (cập nhật)
 using Bondy.SharedKernel.Domain.Common;
+using Identity.Domain.Enums;
+using Identity.Domain.ValueObjects;
 
 namespace Identity.Domain.Entities;
 
@@ -13,13 +14,16 @@ public sealed class User : AggregateRoot
     public DateTime? Dob { get; private set; }
     public bool? Gender { get; private set; }
 
-    public UserRole Role { get; private set; } = UserRole.User;
     public bool Active { get; private set; } = true;
 
-    public int FriendCount { get; private set; }
+    private readonly List<Role> _roles = new();
+    public IReadOnlyCollection<Role> Roles => _roles;
 
-    private readonly List<Scope> _scopes = new();
-    public IReadOnlyCollection<Scope> Scopes => _scopes;
+    private readonly List<Scope> _grantedScopes = new();
+    public IReadOnlyCollection<Scope> GrantedScopes => _grantedScopes;
+
+    private readonly List<Scope> _deniedScopes = new();
+    public IReadOnlyCollection<Scope> DeniedScopes => _deniedScopes;
 
     private readonly List<Account> _accounts = new();
     public IReadOnlyCollection<Account> Accounts => _accounts;
@@ -29,13 +33,10 @@ public sealed class User : AggregateRoot
 
     private User() { }
 
-    public User(
-        Email email,
-        PersonName name,
-        IEnumerable<Scope> scopes,
-        DateTime createdAt,
-        DateTime? dob = null,
-        bool? gender = null,
+    public User(Email email, PersonName name, 
+        DateTime createdAt, 
+        DateTime? dob = null, 
+        bool? gender = null, 
         string? avatarUrl = null)
     {
         Email = email;
@@ -43,46 +44,94 @@ public sealed class User : AggregateRoot
         Dob = dob;
         Gender = gender;
         AvatarUrl = avatarUrl;
-
-        Role = UserRole.User;
         Active = true;
         CreatedAt = createdAt;
-
-        AssignScopes(scopes);
     }
 
-    private void AssignScopes(IEnumerable<Scope> scopes)
+    // Role operations
+    public void AssignRole(Role role)
     {
-        foreach (var scope in scopes)
+        if (role == null)
+            throw new ArgumentNullException(nameof(role));
+
+        if (_roles.Any(r => r.Code == role.Code))
+            return;
+
+        _roles.Add(role);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+
+    public void RemoveRole(string roleCode)
+    {
+        _roles.RemoveAll(r => r.Code == roleCode);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Grants / denies
+    public void GrantScope(Scope scope)
+    {
+        if (_grantedScopes.Any(s => s.Value == scope.Value)) return;
+        _grantedScopes.Add(scope);
+        _deniedScopes.RemoveAll(d => d.Value == scope.Value);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void DenyScope(Scope scope)
+    {
+        if (_deniedScopes.Any(s => s.Value == scope.Value)) return;
+        _deniedScopes.Add(scope);
+        _grantedScopes.RemoveAll(g => g.Value == scope.Value);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RevokeGrantedScope(string scope)
+    {
+        _grantedScopes.RemoveAll(s => s.Value == scope);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void RemoveDeniedScope(string scope)
+    {
+        _deniedScopes.RemoveAll(s => s.Value == scope);
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Effective check
+    public bool HasScope(string requiredScope)
+    {
+        // denied takes precedence
+        if (_deniedScopes.Any(d => ScopeMatcher.IsMatch(d.Value, requiredScope) || string.Equals(d.Value, requiredScope, StringComparison.OrdinalIgnoreCase)))
+            return false;
+
+        if (_grantedScopes.Any(g => ScopeMatcher.IsMatch(g.Value, requiredScope) || string.Equals(g.Value, requiredScope, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        if (_roles.Any(r => r.Scopes.Any(s => ScopeMatcher.IsMatch(s.Value, requiredScope) || string.Equals(s.Value, requiredScope, StringComparison.OrdinalIgnoreCase))))
+            return true;
+
+        return false;
+    }
+
+    public IEnumerable<string> GetEffectiveScopes()
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var r in _roles)
+            foreach (var s in r.Scopes)
+                set.Add(s.Value);
+
+        foreach (var g in _grantedScopes)
+            set.Add(g.Value);
+
+        // remove denies (consider wildcard denies)
+        foreach (var d in _deniedScopes)
         {
-            if (_scopes.Any(s => s.Value == scope.Value))
-                continue;
-
-            _scopes.Add(scope);
+            var denies = set.Where(x => ScopeMatcher.IsMatch(d.Value, x) || string.Equals(x, d.Value, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var rem in denies) set.Remove(rem);
         }
-    }
 
-
-    public bool HasScope(string scope)
-        => _scopes.Any(s => s.Value == scope);
-
-    public void GrantScope(Scope scope, DateTime utcNow)
-    {
-        if (_scopes.Any(s => s.Value == scope.Value)) return;
-        _scopes.Add(scope);
-        UpdatedAt = utcNow;
-    }
-
-    public void RevokeScope(string scope, DateTime utcNow)
-    {
-        _scopes.RemoveAll(s => s.Value == scope);
-        UpdatedAt = utcNow;
-    }
-
-    public void PromoteToAdmin(DateTime utcNow)
-    {
-        Role = UserRole.Admin;
-        GrantScope(new Scope("admin:*"), utcNow);
+        return set;
     }
 
     public void AddLocalAccount(

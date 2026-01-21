@@ -1,0 +1,24 @@
+﻿using Bondy.SharedKernel.Application.Querying;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace Bondy.SharedKernel.Infrastructure.Common.Querying;
+
+public static class EfPagingExtensions
+{
+    public static async Task<PagedResult<TDto>> ToPagedResultAsync<TEntity, TDto>(
+        this IQueryable<TEntity> q,
+        int page,
+        int size,
+        Expression<Func<TEntity, TDto>> selector)
+    {
+        var total = await q.LongCountAsync();
+        var items = await q
+            .Skip((page - 1) * size)
+            .Take(size)
+            .Select(selector)
+            .ToListAsync();
+
+        return new PagedResult<TDto>(items, page, size, total);
+    }
+}

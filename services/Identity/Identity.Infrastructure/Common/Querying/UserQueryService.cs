@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Application.Querying;
+using Bondy.SharedKernel.Infrastructure.Common.Querying;
 using System.Linq.Expressions;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Contracts.Users;
@@ -16,8 +17,7 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
         => new Dictionary<string, Func<IQueryable<Domain.Entities.User>, bool, IQueryable<Domain.Entities.User>>>(StringComparer.OrdinalIgnoreCase)
         {
             ["createdAt"] = (q, desc) => desc ? q.OrderByDescending(x => x.CreatedAt) : q.OrderBy(x => x.CreatedAt),
-            ["email"] = (q, desc) => desc ? q.OrderByDescending(x => x.Email.Value) : q.OrderBy(x => x.Email.Value),
-            ["friendCount"] = (q, desc) => desc ? q.OrderByDescending(x => x.FriendCount) : q.OrderBy(x => x.FriendCount),
+            ["email"] = (q, desc) => desc ? q.OrderByDescending(x => x.Email.Value) : q.OrderBy(x => x.Email.Value)
         };
 
     protected override IQueryable<Domain.Entities.User> DefaultSort(IQueryable<Domain.Entities.User> q)
@@ -29,8 +29,7 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
             // Nếu bạn muốn join name “đẹp” như code cũ, nên precompute ở DB (FullName) hoặc map ra app layer.
             // Ở đây giữ tối giản để EF dịch chắc chắn:
             (u.Name.FirstName ?? "") + " " + (u.Name.MiddleName ?? "") + " " + (u.Name.LastName ?? ""),
-            u.AvatarUrl,
-            u.FriendCount
+            u.AvatarUrl
         );
 
     public Task<PagedResult<UserBasicResponse>> SearchAsync(UserListRequest req)

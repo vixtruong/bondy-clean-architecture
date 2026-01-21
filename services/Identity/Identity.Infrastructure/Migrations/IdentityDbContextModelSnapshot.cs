@@ -299,6 +299,45 @@ namespace Identity.Infrastructure.Migrations
                     b.ToTable("refresh_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.Role", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roles");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roles_code");
+
+                    b.ToTable("roles", (string)null);
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.User", b =>
                 {
                     b.Property<long>("Id")
@@ -329,19 +368,9 @@ namespace Identity.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("email");
 
-                    b.Property<int>("FriendCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("friend_count");
-
                     b.Property<bool?>("Gender")
                         .HasColumnType("boolean")
                         .HasColumnName("gender");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("role");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -354,10 +383,26 @@ namespace Identity.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("ux_users_email");
 
-                    b.ToTable("users", null, t =>
-                        {
-                            t.HasCheckConstraint("ck_users_role", "role IN ('USER','ADMIN')");
-                        });
+                    b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("user_roles", b =>
+                {
+                    b.Property<long>("user_id")
+                        .HasColumnType("bigint")
+                        .HasColumnName("user_id");
+
+                    b.Property<long>("role_id")
+                        .HasColumnType("bigint")
+                        .HasColumnName("role_id");
+
+                    b.HasKey("user_id", "role_id")
+                        .HasName("pk_user_roles");
+
+                    b.HasIndex("role_id")
+                        .HasDatabaseName("ix_user_roles_role_id");
+
+                    b.ToTable("user_roles", (string)null);
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.Account", b =>
@@ -492,6 +537,35 @@ namespace Identity.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Identity.Domain.Entities.Role", b =>
+                {
+                    b.OwnsMany("Identity.Domain.ValueObjects.Scope", "Scopes", b1 =>
+                        {
+                            b1.Property<long>("role_id")
+                                .HasColumnType("bigint")
+                                .HasColumnName("role_id");
+
+                            b1.Property<string>("Value")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("scope");
+
+                            b1.HasKey("role_id", "Value")
+                                .HasName("pk_role_scopes");
+
+                            b1.HasIndex("role_id")
+                                .HasDatabaseName("ix_role_scopes_role_id");
+
+                            b1.ToTable("role_scopes", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("role_id")
+                                .HasConstraintName("fk_role_scopes_roles_role_id");
+                        });
+
+                    b.Navigation("Scopes");
+                });
+
             modelBuilder.Entity("Identity.Domain.Entities.User", b =>
                 {
                     b.OwnsOne("Identity.Domain.ValueObjects.PersonName", "Name", b1 =>
@@ -522,7 +596,7 @@ namespace Identity.Infrastructure.Migrations
                                 .HasConstraintName("fk_users_users_id");
                         });
 
-                    b.OwnsMany("Identity.Domain.ValueObjects.Scope", "Scopes", b1 =>
+                    b.OwnsMany("Identity.Domain.ValueObjects.Scope", "DeniedScopes", b1 =>
                         {
                             b1.Property<long>("user_id")
                                 .HasColumnType("bigint")
@@ -534,19 +608,65 @@ namespace Identity.Infrastructure.Migrations
                                 .HasColumnName("scope");
 
                             b1.HasKey("user_id", "Value")
-                                .HasName("pk_user_scopes");
+                                .HasName("pk_user_denied_scopes");
 
-                            b1.ToTable("user_scopes", (string)null);
+                            b1.HasIndex("user_id")
+                                .HasDatabaseName("ix_user_denied_scopes_user_id");
+
+                            b1.ToTable("user_denied_scopes", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("user_id")
-                                .HasConstraintName("fk_user_scopes_users_user_id");
+                                .HasConstraintName("fk_user_denied_scopes_users_user_id");
                         });
+
+                    b.OwnsMany("Identity.Domain.ValueObjects.Scope", "GrantedScopes", b1 =>
+                        {
+                            b1.Property<long>("user_id")
+                                .HasColumnType("bigint")
+                                .HasColumnName("user_id");
+
+                            b1.Property<string>("Value")
+                                .HasMaxLength(500)
+                                .HasColumnType("character varying(500)")
+                                .HasColumnName("scope");
+
+                            b1.HasKey("user_id", "Value")
+                                .HasName("pk_user_granted_scopes");
+
+                            b1.HasIndex("user_id")
+                                .HasDatabaseName("ix_user_granted_scopes_user_id");
+
+                            b1.ToTable("user_granted_scopes", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("user_id")
+                                .HasConstraintName("fk_user_granted_scopes_users_user_id");
+                        });
+
+                    b.Navigation("DeniedScopes");
+
+                    b.Navigation("GrantedScopes");
 
                     b.Navigation("Name")
                         .IsRequired();
+                });
 
-                    b.Navigation("Scopes");
+            modelBuilder.Entity("user_roles", b =>
+                {
+                    b.HasOne("Identity.Domain.Entities.Role", null)
+                        .WithMany()
+                        .HasForeignKey("role_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_roles_role");
+
+                    b.HasOne("Identity.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("user_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_roles_user");
                 });
 
             modelBuilder.Entity("Identity.Domain.Entities.User", b =>
