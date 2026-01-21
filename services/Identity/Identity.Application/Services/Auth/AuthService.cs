@@ -3,11 +3,13 @@ using Bondy.Contracts.Enums.Mail;
 using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
+using Google.Apis.Auth;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Application.Authorization;
+using Identity.Application.Exceptions;
 using Identity.Contracts.Auth;
 using Identity.Contracts.Otp;
 using Identity.Domain.Constants;
@@ -105,7 +107,18 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         var now = _clock.Now;
         var provider = AuthProvider.Google;
 
-        var payload = await _googleTokenVerifier.VerifyAsync(req.IdToken);
+        GoogleJsonWebSignature.Payload payload;
+
+        try
+        {
+            payload = await _googleTokenVerifier.VerifyAsync(req.IdToken);
+        }
+        catch (OAuth2TokenInvalidException ex)
+        {
+            return Result.Failure<AuthTokens>(
+                Error.Unauthorized(ErrorCodes.Auth.InvalidOAuth2Token, ex.Message));
+        }
+
         var email = Email.FromPersisted(payload.Email);
 
         var user = await _users.GetByEmailAsync(email);

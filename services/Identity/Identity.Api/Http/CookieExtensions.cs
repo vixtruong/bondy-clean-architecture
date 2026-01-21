@@ -1,4 +1,6 @@
-﻿public static class CookieExtensions
+﻿namespace Identity.Api.Http;
+
+public static class CookieExtensions
 {
     private const string DefaultPath = "/";
 

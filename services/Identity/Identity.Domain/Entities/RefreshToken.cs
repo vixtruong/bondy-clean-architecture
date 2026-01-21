@@ -1,5 +1,5 @@
 ﻿using Identity.Domain.ValueObjects;
-using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Domain.Common;
 
 namespace Identity.Domain.Entities;
 

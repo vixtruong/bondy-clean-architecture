@@ -1,5 +1,5 @@
 ﻿using Bondy.Contracts.Dtos.ApiKey;
-using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Domain.Common;
 
 namespace ApiGateway.Clients.Identity;
 

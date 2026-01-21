@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Querying;
+﻿using Bondy.SharedKernel.Application.Querying;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Contracts.Users;

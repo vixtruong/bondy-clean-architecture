@@ -1,4 +1,6 @@
-﻿namespace Bondy.SharedKernel.Application.Common;
+﻿using Bondy.SharedKernel.Domain.Common;
+
+namespace Bondy.SharedKernel.Domain.Common;
 
 public class Result
 {

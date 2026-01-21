@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Api.Authorization;
+﻿using Bondy.SharedKernel.Application.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 

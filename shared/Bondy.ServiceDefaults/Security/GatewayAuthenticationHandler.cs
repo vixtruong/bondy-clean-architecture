@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
 using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Application.Common;
+using Bondy.SharedKernel.Domain.Common;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
