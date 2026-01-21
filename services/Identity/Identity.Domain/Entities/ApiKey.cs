@@ -67,9 +67,6 @@ public sealed class ApiKey : AggregateRoot
     public bool IsExpired(DateTimeOffset now)
         => ExpiresAt.HasValue && now >= ExpiresAt.Value;
 
-    public bool HasScope(string scope)
-        => _scopes.Any(s => s.Value == scope);
-
     public bool IsPathAllowed(string path)
     {
         if (string.IsNullOrWhiteSpace(AllowedPaths)) return true;
@@ -106,4 +103,9 @@ public sealed class ApiKey : AggregateRoot
         RotateAt = utcNow.Add(gracePeriod);
         UpdatedAt = utcNow.DateTime;
     }
+
+    public bool HasScope(string requiredScope)
+        => _scopes.Any(s => ScopeMatcher.IsMatch(s.Value, requiredScope) || string.Equals(s.Value, requiredScope, StringComparison.OrdinalIgnoreCase));
+
+    public IEnumerable<string> GetEffectiveScopes() => _scopes.Select(s => s.Value);
 }

@@ -1,5 +1,5 @@
 ﻿using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Application.Authorization;
+using Bondy.SharedKernel.Application.Authorization.Scopes;
 using Identity.Application.Services.ApiKey;
 using Identity.Contracts.ApiKey;
 using Microsoft.AspNetCore.Authorization;
@@ -18,21 +18,21 @@ public class ApiKeysController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Policy = Scopes.AdminApiKeysCreate)]
+    [Authorize(Policy = AdminApiKeyScopes.Create)]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateApiKeyRequest req)
     {
         return this.ToActionResult(await _service.Create(req));
     }
 
-    [Authorize(Policy = Scopes.AdminApiKeysRotate)]
+    [Authorize(Policy = AdminApiKeyScopes.Update)]
     [HttpPut]
     public async Task<IActionResult> Update([FromBody] UpdateApiKeyRequest req)
     {
         return this.ToActionResult(await _service.Update(req));
     }
 
-    [Authorize(Policy = Scopes.AdminApiKeysRevoke)]
+    [Authorize(Policy = AdminApiKeyScopes.Revoke)]
     [HttpPost("{apiKeyId}/revoke")]
     public async Task<IActionResult> Revoke([FromRoute] string apiKeyId)
     {

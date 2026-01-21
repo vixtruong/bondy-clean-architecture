@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Domain.Common;
+using Bondy.SharedKernel.Domain.ValueObjects;
 
 namespace Identity.Domain.ValueObjects;
 
@@ -20,10 +21,6 @@ public sealed class PersonName : ValueObject
         if (string.IsNullOrWhiteSpace(firstName))
             return Result.Failure<PersonName>(
                 Error.Validation(ErrorCodes.Validation.Required, "First name is required"));
-
-        if (string.IsNullOrWhiteSpace(lastName))
-            return Result.Failure<PersonName>(
-                Error.Validation(ErrorCodes.Validation.Required, "Last name is required"));
 
         firstName = firstName.Trim();
         lastName = string.IsNullOrWhiteSpace(lastName) ? null : lastName.Trim();

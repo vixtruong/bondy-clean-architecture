@@ -1,10 +1,10 @@
 ﻿using Bondy.SharedKernel.Application.Querying;
+using Bondy.SharedKernel.Infrastructure.Common.Querying;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Contracts.Users;
 using Identity.Domain.Entities;
 using Identity.Domain.ValueObjects;
-using Identity.Infrastructure.Common.Querying;
 using Identity.Infrastructure.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,6 +46,21 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public async Task<User?> GetByIdAsync(long id)
+    {
+        return await _db.Users.FindAsync(id);
+    }
+
+    public Task<User?> GetByIdForTokenAsync(long userId)
+    {
+        return _db.Users
+            .Include(u => u.Roles)
+                .ThenInclude(r => r.Scopes)
+            .Include(u => u.GrantedScopes)
+            .Include(u => u.DeniedScopes)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+    }
+
     public Task<List<UserBasicResponse>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds)
     {
         if (userIds.Count == 0) return Task.FromResult(new List<UserBasicResponse>());
@@ -56,9 +71,8 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .Select(u => new UserBasicResponse(
                 u.Id,
                 u.Name.ToString(),
-                u.AvatarUrl,
-                u.FriendCount
-            ))
+                u.AvatarUrl
+                ))
             .ToListAsync();
     }
 
@@ -70,8 +84,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .Select(u => new UserBasicResponse(
                 u.Id,
                 u.Name.ToString(),
-                u.AvatarUrl,
-                u.FriendCount
+                u.AvatarUrl
             ))
             .FirstOrDefaultAsync();
     }
@@ -99,8 +112,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             u => new UserBasicResponse(
                 u.Id,
                 u.Name.ToString(),
-                u.AvatarUrl,
-                u.FriendCount
+                u.AvatarUrl
             ));
     }
 

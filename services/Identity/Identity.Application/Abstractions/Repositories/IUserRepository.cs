@@ -13,6 +13,8 @@ public interface IUserRepository
     Task<int> UpdateAvatarUrlByIdAsync(long id, string? avatarUrl);
 
     Task<User?> GetByEmailAsync(Email email);
+    Task<User?> GetByIdAsync(long id);
+    Task<User?> GetByIdForTokenAsync(long userId);
 
     Task<List<UserBasicResponse>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds);
 

@@ -16,6 +16,8 @@ public class Program
 
         // Identity
         builder.Services.AddIdentityApplication();
+
+        builder.Services.AddHttpContextAccessor(); // Current User
         builder.Services.AddIdentityInfrastructure(builder.Configuration);
 
         var app = builder.Build();

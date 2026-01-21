@@ -3,6 +3,5 @@
 public sealed record UserBasicResponse(
     long Id,
     string DisplayName,
-    string? AvatarUrl,
-    int FriendCount
+    string? AvatarUrl
 );

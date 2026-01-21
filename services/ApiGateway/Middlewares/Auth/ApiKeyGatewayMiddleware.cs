@@ -102,14 +102,14 @@ public sealed class ApiKeyGatewayMiddleware
         context.Request.Headers.Remove("X-Auth-Type");
         context.Request.Headers.Remove("X-Identity-Id");
         context.Request.Headers.Remove("X-Identity-Owner");
-        context.Request.Headers.Remove("X-Effective-Scopes");
+        context.Request.Headers.Remove("X-Effective-ScopesAll");
         context.Request.Headers.Remove("X-Role");
 
         // Attach identity + scopes for downstream services (will be forwarded by Ocelot)
         context.Request.Headers["X-Auth-Type"] = "apikey";
         context.Request.Headers["X-Identity-Id"] = apiKey.Id.ToString();
         context.Request.Headers["X-Identity-Owner"] = apiKey.Owner;
-        context.Request.Headers["X-Effective-Scopes"] = string.Join(',', effectiveScopes);
+        context.Request.Headers["X-Effective-ScopesAll"] = string.Join(',', effectiveScopes);
 
         // keep in Items for other middlewares in the same pipeline
         context.Items["identity:type"] = "apikey";

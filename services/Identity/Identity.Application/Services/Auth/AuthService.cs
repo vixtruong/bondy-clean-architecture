@@ -1,5 +1,6 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
 using Bondy.Contracts.Enums.Mail;
+using Bondy.SharedKernel.Application.Authorization.Role;
 using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
@@ -8,7 +9,6 @@ using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
-using Identity.Application.Authorization;
 using Identity.Application.Exceptions;
 using Identity.Contracts.Auth;
 using Identity.Contracts.Otp;
@@ -35,6 +35,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
     private readonly IOtpGenerator _otpGenerator;
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
     private readonly ITempPasswordGenerator _tempPasswordGenerator;
+    private readonly IRoleRepository _roles;
 
     public AuthService(ILogger<AuthService> logger, 
         IClock clock, 
@@ -46,7 +47,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         IOtpCodeRepository otpCodes, 
         IOtpGenerator otpGenerator, 
         IGoogleTokenVerifier googleTokenVerifier, 
-        ITempPasswordGenerator tempPasswordGenerator) : base(logger, clock)
+        ITempPasswordGenerator tempPasswordGenerator, IRoleRepository roles) : base(logger, clock)
     {
         _users = users;
         _refreshTokens = refreshTokens;
@@ -58,6 +59,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         _otpGenerator = otpGenerator;
         _googleTokenVerifier = googleTokenVerifier;
         _tempPasswordGenerator = tempPasswordGenerator;
+        _roles = roles;
     }
 
     #endregion
@@ -66,7 +68,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
     public async Task<Result<AuthTokens>> LoginAsync(LoginRequest request)
     {
-        User? user = await _users.GetByEmailAsync(Email.FromPersisted(request.Email));
+        Domain.Entities.User? user = await _users.GetByEmailAsync(Email.FromPersisted(request.Email));
 
         if (user is null)
             return Result.Failure<AuthTokens>(
@@ -85,7 +87,9 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             return Result.Failure<AuthTokens>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
 
-        var accessTokenResult = _jwt.GenerateAccessToken(user);
+        var userForToken = await _users.GetByIdForTokenAsync(user.Id);
+
+        var accessTokenResult = _jwt.GenerateAccessToken(userForToken!);
 
         string newSessionId = Guid.NewGuid().ToString("N");
         string refreshToken = await GenerateRefreshToken(user.Id, newSessionId);
@@ -128,10 +132,9 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         if (user is null)
         {
-            user = new User(
+            user = new Domain.Entities.User(
                 email,
                 PersonName.FromPersisted(payload.GivenName, "", payload.FamilyName),
-                ScopeSet.UserScopes,
                 now,
                 avatarUrl: payload.Picture);
 
@@ -140,6 +143,12 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
             user.AddLocalAccount(
                 HashedValue.FromPersisted(passwordHash), now);
+
+            var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
+            if (userRole is null)
+                return Result.Failure<AuthTokens>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
+
+            user.AssignRole(userRole);
 
             user.AddSocialAccount(provider, now);
 
@@ -154,7 +163,9 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             shouldSendWelcomeEmail = true;
         }
 
-        var accessTokenResult = _jwt.GenerateAccessToken(user);
+        var userForToken = await _users.GetByIdForTokenAsync(user.Id);
+
+        var accessTokenResult = _jwt.GenerateAccessToken(userForToken!);
 
         var sessionId = Guid.NewGuid().ToString("N");
         var refreshToken = await GenerateRefreshToken(user.Id, sessionId);
@@ -274,12 +285,17 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
                     "User already exists."
                 ));
 
-        var newUser = new User(
+        var newUser = new Domain.Entities.User(
             preReg.Email,
             preReg.Name,
-            ScopeSet.UserScopes,
             now,
             preReg.Dob);
+
+        var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
+        if (userRole is null)
+            return Result.Failure<AuthTokens>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
+
+        newUser.AssignRole(userRole);
 
         newUser.AddLocalAccount(preReg.PasswordHash, now);
 

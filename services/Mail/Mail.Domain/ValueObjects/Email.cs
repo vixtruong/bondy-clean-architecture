@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Domain.Common;
+using Bondy.SharedKernel.Domain.ValueObjects;
 using System.Text.RegularExpressions;
 
 namespace Mail.Domain.ValueObjects;

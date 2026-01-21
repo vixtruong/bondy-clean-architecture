@@ -26,7 +26,7 @@ public static class GatewayAuthExtension
 
         services.AddAuthorization(options =>
         {
-            foreach (var scope in Scopes.All)
+            foreach (var scope in ScopesAll.All)
             {
                 options.AddPolicy(scope, policy =>
                 {

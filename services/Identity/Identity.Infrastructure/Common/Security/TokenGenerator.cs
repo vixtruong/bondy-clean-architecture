@@ -28,12 +28,16 @@ public sealed class TokenGenerator : ITokenGenerator
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email.Value),
-            new("role", user.Role.ToString().ToUpperInvariant())
         };
 
-        foreach (var scope in user.Scopes)
+        foreach (var role in user.Roles)
         {
-            claims.Add(new Claim("scope", scope.Value));
+            claims.Add(new Claim(ClaimTypes.Role, role.Code));
+        }
+
+        foreach (var scope in user.GetEffectiveScopes())
+        {
+            claims.Add(new Claim("scope", scope));
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_opt.Secret));

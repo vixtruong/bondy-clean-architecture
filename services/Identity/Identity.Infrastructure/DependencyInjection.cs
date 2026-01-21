@@ -1,16 +1,20 @@
-﻿using Bondy.SharedKernel.Domain.Abstractions;
+﻿using Bondy.SharedKernel.Application.Abstractions.Security;
+using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Infrastructure.Common.Clock;
 using Bondy.SharedKernel.Infrastructure.Configuration;
+using Bondy.SharedKernel.Infrastructure.Security;
 using Identity.Application.Abstractions.Integrations;
 using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
-using Identity.Infrastructure.Common.Clock;
 using Identity.Infrastructure.Common.Security;
 using Identity.Infrastructure.Integrations.Mail;
 using Identity.Infrastructure.Integrations.OAuth2;
 using Identity.Infrastructure.Jobs.Migration;
+using Identity.Infrastructure.Jobs.Seed;
 using Identity.Infrastructure.Persistence;
+using Identity.Infrastructure.Persistence.Seed;
 using Identity.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -38,12 +42,16 @@ public static class DependencyInjection
 
         services.AddScoped<IIdentityDbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
 
+        // Current User
+        services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+
         // repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IPreRegistrationRepository, PreRegistrationRepository>();
         services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
         services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
 
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.AddSingleton<ITokenGenerator, TokenGenerator>();
@@ -72,6 +80,9 @@ public static class DependencyInjection
         services.AddScoped<ITempPasswordGenerator, TempPasswordGenerator>();
 
         services.AddHostedService<IdentityMigrationService>();
+
+        services.AddScoped<RoleSeeder>();
+        services.AddHostedService<RoleSeedHostedService>();
 
         return services;
     }
