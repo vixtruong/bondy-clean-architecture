@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Bondy.Contracts\Bondy.Contracts.csproj" />
-    <ProjectReference Include="..\..\shared\Bondy.SharedKernel\Bondy.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
-using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Domain.Common;
 
 namespace Mail.Application.Services.Mail;
 

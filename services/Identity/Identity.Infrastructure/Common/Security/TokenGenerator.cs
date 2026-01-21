@@ -2,6 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using Bondy.SharedKernel.Abstractions;
+using Bondy.SharedKernel.Domain.Abstractions;
 using Identity.Application.Abstractions.Security;
 using Identity.Domain.Entities;
 using Microsoft.Extensions.Options;

@@ -1,4 +1,4 @@
-﻿namespace Bondy.SharedKernel.Querying;
+﻿namespace Bondy.SharedKernel.Application.Querying;
 
 public sealed record PagedResult<T>(
     IReadOnlyList<T> Items,

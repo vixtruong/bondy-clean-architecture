@@ -1,5 +1,5 @@
 ﻿
-namespace Bondy.SharedKernel.Querying
+namespace Bondy.SharedKernel.Application.Querying
 {
     // Bondy.SharedKernel.Querying
     public static class QueryablePagingExtensions

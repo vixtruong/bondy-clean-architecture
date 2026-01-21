@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Domain\Bondy.SharedKernel.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bondy.SharedKernel.Domain\Bondy.SharedKernel.Domain.csproj" />
   </ItemGroup>
 
 </Project>

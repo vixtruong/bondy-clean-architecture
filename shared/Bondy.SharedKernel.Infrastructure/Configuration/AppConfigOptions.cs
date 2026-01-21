@@ -1,4 +1,5 @@
-﻿namespace Bondy.SharedKernel.Configuration;
+﻿
+namespace Bondy.SharedKernel.Infrastructure.Configuration;
 
 public sealed class AppConfigOptions
 {

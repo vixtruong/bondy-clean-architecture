@@ -1,4 +1,5 @@
-﻿namespace Bondy.SharedKernel.Constants;
+﻿
+namespace Bondy.SharedKernel.Application.Common;
 
 public static class ErrorCodes
 {

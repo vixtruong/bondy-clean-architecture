@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Abstractions;
+﻿using Bondy.SharedKernel.Domain.Abstractions;
 
 namespace Mail.Infrastructure.Common.Clock
 {

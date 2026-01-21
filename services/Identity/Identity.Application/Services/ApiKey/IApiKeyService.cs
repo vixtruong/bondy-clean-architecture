@@ -1,5 +1,5 @@
 ﻿using Bondy.Contracts.Dtos.ApiKey;
-using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Domain.Common;
 using Identity.Contracts.ApiKey;
 
 namespace Identity.Application.Services.ApiKey;

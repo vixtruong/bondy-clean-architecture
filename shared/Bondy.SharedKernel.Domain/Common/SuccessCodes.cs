@@ -1,4 +1,5 @@
-﻿namespace Bondy.SharedKernel.Constants;
+﻿
+namespace Bondy.SharedKernel.Domain.Common;
 
 public static class SuccessCodes
 {

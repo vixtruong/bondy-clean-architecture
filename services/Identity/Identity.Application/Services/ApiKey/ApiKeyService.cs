@@ -1,20 +1,14 @@
 ﻿using Bondy.Contracts.Dtos.ApiKey;
-using Bondy.SharedKernel.Abstractions;
-using Bondy.SharedKernel.Application;
-using Bondy.SharedKernel.Common;
-using Bondy.SharedKernel.Configuration;
-using Bondy.SharedKernel.Constants;
+using Bondy.SharedKernel.Application.Base;
+using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Domain.Common;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Contracts.ApiKey;
 using Identity.Domain.Constants;
-using Identity.Domain.Entities;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography;
 
 namespace Identity.Application.Services.ApiKey;
 
@@ -27,9 +21,8 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
     public ApiKeyService(
         ILogger<ApiKeyService> logger, 
         IClock clock, 
-        IOptions<AppConfigOptions> options, 
         IApiKeyRepository apiKeys, 
-        IApiKeyHasher apiKeyHasher, IApiKeyGenerator apiKeyGenerator) : base(logger, clock, options.Value)
+        IApiKeyHasher apiKeyHasher, IApiKeyGenerator apiKeyGenerator) : base(logger, clock)
     {
         _apiKeys = apiKeys;
         _apiKeyHasher = apiKeyHasher;
@@ -40,9 +33,7 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
     {
         var now = _clock.Now;
 
-        var env = _appConfigs.Environment == "Production" ? ApiKeyPrefix.Live : ApiKeyPrefix.Test;
-
-        var apiKeyGen = _apiKeyGenerator.Generate(env, now);
+        var apiKeyGen = _apiKeyGenerator.Generate(now);
         var rawApiKey = apiKeyGen.rawKey;
         var keyPrefix = apiKeyGen.prefix;
         var keyHash = apiKeyGen.keyHash;
@@ -93,9 +84,7 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
 
         oldKey.Rotate(now, ApiKeyPolicy.DefaultGracePeriod);
 
-        var env = _appConfigs.Environment == "Production" ? ApiKeyPrefix.Live : ApiKeyPrefix.Test;
-
-        var apiKeyGen = _apiKeyGenerator.Generate(env, now);
+        var apiKeyGen = _apiKeyGenerator.Generate(now);
         var rawApiKey = apiKeyGen.rawKey;
         var keyPrefix = apiKeyGen.prefix;
         var keyHash = apiKeyGen.keyHash;

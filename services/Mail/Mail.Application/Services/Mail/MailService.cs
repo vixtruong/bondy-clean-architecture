@@ -1,9 +1,7 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
-using Bondy.SharedKernel.Abstractions;
-using Bondy.SharedKernel.Application;
-using Bondy.SharedKernel.Common;
-using Bondy.SharedKernel.Configuration;
-using Bondy.SharedKernel.Constants;
+using Bondy.SharedKernel.Application.Base;
+using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Domain.Common;
 using Mail.Application.Abstractions.Repositories;
 using Mail.Application.Abstractions.Templating;
 using Mail.Application.Mapper;
@@ -13,7 +11,6 @@ using Mail.Domain.Entities;
 using Mail.Domain.Enums;
 using Mail.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Text.Json;
 
 namespace Mail.Application.Services.Mail;
@@ -32,7 +29,11 @@ public sealed class MailService : ApplicationServiceBase, IMailService
 
     #region Main Methods
 
-    public MailService(ILogger<MailService> logger, IClock clock, IOptions<AppConfigOptions> options, IMailRepository mail, ITemplateRenderer renderer, ITemplateProvider provider, IEmailSender sender) : base(logger, clock, options.Value)
+    public MailService(ILogger<MailService> logger, 
+        IClock clock, IMailRepository mail, 
+        ITemplateRenderer renderer, 
+        ITemplateProvider provider, 
+        IEmailSender sender) : base(logger, clock)
     {
         _mail = mail;
         _renderer = renderer;
@@ -116,7 +117,6 @@ public sealed class MailService : ApplicationServiceBase, IMailService
             _ => throw new ArgumentOutOfRangeException(nameof(purpose), purpose, null)
         };
     }
-
 
     #endregion
 }

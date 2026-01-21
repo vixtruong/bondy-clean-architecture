@@ -1,4 +1,4 @@
-﻿using Bondy.SharedKernel.Common;
+﻿using Bondy.SharedKernel.Application.Common;
 
 namespace Bondy.ServiceDefaults.Http;
 

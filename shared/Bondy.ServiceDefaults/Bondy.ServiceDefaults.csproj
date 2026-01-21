@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Bondy.SharedKernel\Bondy.SharedKernel.csproj" />
+    <ProjectReference Include="..\Bondy.SharedKernel.Api\Bondy.SharedKernel.Api.csproj" />
   </ItemGroup>
 
 </Project>

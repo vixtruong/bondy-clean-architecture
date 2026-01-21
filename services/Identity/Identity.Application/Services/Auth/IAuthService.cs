@@ -1,5 +1,5 @@
 ﻿
-using Bondy.SharedKernel.Common;
+using Bondy.SharedKernel.Domain.Common;
 using Identity.Contracts.Auth;
 
 namespace Identity.Application.Services.Auth;
