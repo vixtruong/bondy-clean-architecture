@@ -2,7 +2,7 @@
 using Bondy.SharedKernel.Infrastructure.Common.Querying;
 using System.Linq.Expressions;
 using Identity.Application.Abstractions.Persistence;
-using Identity.Contracts.Users;
+using Identity.Application.Results.Users;
 using Microsoft.EntityFrameworkCore;
 
 namespace Identity.Infrastructure.Common.Querying;
@@ -23,8 +23,8 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
     protected override IQueryable<Domain.Entities.User> DefaultSort(IQueryable<Domain.Entities.User> q)
         => q.OrderByDescending(x => x.Id);
 
-    private static readonly Expression<Func<Domain.Entities.User, UserBasicResponse>> BasicSelector =
-        u => new UserBasicResponse(
+    private static readonly Expression<Func<Domain.Entities.User, UserBasicResult>> BasicSelector =
+        u => new UserBasicResult(
             u.Id,
             // Nếu bạn muốn join name “đẹp” như code cũ, nên precompute ở DB (FullName) hoặc map ra app layer.
             // Ở đây giữ tối giản để EF dịch chắc chắn:
@@ -32,21 +32,21 @@ public sealed class UserQueryService : QueryServiceBase<Domain.Entities.User>
             u.AvatarUrl
         );
 
-    public Task<PagedResult<UserBasicResponse>> SearchAsync(UserListRequest req)
-    {
-        IQueryable<Domain.Entities.User> q = _db.Users.AsNoTracking();
+    //public Task<PagedResult<UserBasicResult>> SearchAsync(UserListRequest req)
+    //{
+    //    IQueryable<Domain.Entities.User> q = _db.Users.AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(req.EmailContains))
-        {
-            var term = req.EmailContains.Trim();
-            q = q.Where(u => EF.Functions.ILike(u.Email.Value, $"%{term}%"));
-        }
+    //    if (!string.IsNullOrWhiteSpace(req.EmailContains))
+    //    {
+    //        var term = req.EmailContains.Trim();
+    //        q = q.Where(u => EF.Functions.ILike(u.Email.Value, $"%{term}%"));
+    //    }
 
-        if (req.Active.HasValue)
-            q = q.Where(u => u.Active == req.Active.Value);
+    //    if (req.Active.HasValue)
+    //        q = q.Where(u => u.Active == req.Active.Value);
 
-        q = ApplyCommon(q, req);
+    //    q = ApplyCommon(q, req);
 
-        return q.ToPagedResultAsync(req.PageNumber, req.PageSize, BasicSelector);
-    }
+    //    return q.ToPagedResultAsync(req.PageNumber, req.PageSize, BasicSelector);
+    //}
 }

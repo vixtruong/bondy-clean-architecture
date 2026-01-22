@@ -1,10 +1,9 @@
-﻿using Bondy.Contracts.Dtos.ApiKey;
-using Bondy.SharedKernel.Application.Base;
+﻿using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
-using Identity.Contracts.ApiKey;
+using Identity.Application.Results.ApiKey;
 using Identity.Domain.Constants;
 using Identity.Domain.Enums;
 using Identity.Domain.ValueObjects;
@@ -29,7 +28,7 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
         _apiKeyGenerator = apiKeyGenerator;
     }
 
-    public async Task<Result<ApiKeyCreatedResponse>> Create(CreateApiKeyRequest req)
+    public async Task<Result<ApiKeyCreatedResult>> Create(string name, string owner, string ownerEmail, IReadOnlyList<string> scopes, DateTimeOffset? expiresAt)
     {
         var now = _clock.Now;
 
@@ -40,47 +39,47 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
 
         var apiKey = new Domain.Entities.ApiKey(
             keyId: Guid.NewGuid().ToString("N"),
-            name: req.Name,
+            name: name,
             keyPrefix: keyPrefix,
-            keyHash: HashedValue.FromPersisted(keyHash), 
-            owner: req.Owner,
-            ownerEmail: Email.FromPersisted(req.OwnerEmail), 
-            scopes: req.Scopes.Select(scope => new Scope(scope)),
+            keyHash: HashedValue.FromPersisted(keyHash),
+            owner: owner,
+            ownerEmail: Email.FromPersisted(ownerEmail),
+            scopes: scopes.Select(scope => new Scope(scope)),
             allowedPaths: null,
             rateLimitPlanId: null,
-            expiresAt: req.ExpiresAt,
+            expiresAt: expiresAt,
             createdAt: now
         );
 
         await _apiKeys.AddAsync(apiKey);
 
-        return Result.Success(new ApiKeyCreatedResponse(
+        return Result.Success(new ApiKeyCreatedResult(
             Id: apiKey.Id,
             Name: apiKey.Name,
             RawApiKey: rawApiKey,
             CreatedAt: now,
-            ExpiresAt: req.ExpiresAt
+            ExpiresAt: expiresAt
         ));
     }
 
-    public async Task<Result<ApiKeyResponse>> Update(UpdateApiKeyRequest req)
+    public async Task<Result<ApiKeyResult>> Update(long apiKeyId, string name, IReadOnlyList<string> scopes, DateTimeOffset? expiresAt, bool? isActive)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<Result<ApiKeyCreatedResponse>> Rotate(RotateApiKeyRequest req)
+    public async Task<Result<ApiKeyCreatedResult>> Rotate(long apiKeyId)
     {
         var now = _clock.NowOffset;
 
-        var oldKey = await _apiKeys.GetByIdAsync(req.ApiKeyId);
+        var oldKey = await _apiKeys.GetByIdAsync(apiKeyId);
         if (oldKey is null)
-            return Result<ApiKeyCreatedResponse>.Failure(Error.BadRequest(ErrorCodes.Common.NotFound, "Api key not found."));
+            return Result<ApiKeyCreatedResult>.Failure(Error.BadRequest(ErrorCodes.Common.NotFound, "Api key not found."));
 
         if (!oldKey.IsActive || oldKey.RevokeAt != null)
-            return Result<ApiKeyCreatedResponse>.Failure(Error.Unauthorized(ErrorCodes.Auth.ApiKeyRevoked, "Api key revoked"));
+            return Result<ApiKeyCreatedResult>.Failure(Error.Unauthorized(ErrorCodes.Auth.ApiKeyRevoked, "Api key revoked"));
 
         if (oldKey.IsExpired(now) || (oldKey.RotateAt != null && oldKey.RotateAt < now))
-            return Result<ApiKeyCreatedResponse>.Failure(Error.Unauthorized(ErrorCodes.Auth.ApiKeyExpired, "Api key expired or rotated"));
+            return Result<ApiKeyCreatedResult>.Failure(Error.Unauthorized(ErrorCodes.Auth.ApiKeyExpired, "Api key expired or rotated"));
 
         oldKey.Rotate(now, ApiKeyPolicy.DefaultGracePeriod);
 
@@ -106,7 +105,7 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
         await _apiKeys.AddAsync(newKey);
         await _apiKeys.UpdateAsync(oldKey);
 
-        return Result.Success(new ApiKeyCreatedResponse(
+        return Result.Success(new ApiKeyCreatedResult(
             Id: newKey.Id,
             Name: newKey.Name,
             RawApiKey: rawApiKey,
@@ -133,18 +132,17 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
         return Result.Success(SuccessCodes.Common.Ok);
     }
 
-    public async Task<Result<ApiKeyValidationResult>> Validate(
-        ValidateApiKeyRequest req)
+    public async Task<Result<ApiKeyValidationResult>> Validate(string apiKeyReq)
     {
         var now = _clock.NowOffset;
 
-        var lastUnderscoreIndex = req.ApiKey.LastIndexOf('_');
+        var lastUnderscoreIndex = apiKeyReq.LastIndexOf('_');
         if (lastUnderscoreIndex <= 0 ||
-            lastUnderscoreIndex == req.ApiKey.Length - 1)
+            lastUnderscoreIndex == apiKeyReq.Length - 1)
             return Result<ApiKeyValidationResult>.Failure(Error.Unauthorized(ErrorCodes.Auth.ApiKeyInvalid, "Api key invalid"));
 
-        var keyPrefix = req.ApiKey[..lastUnderscoreIndex];
-        var rawKey = req.ApiKey;
+        var keyPrefix = apiKeyReq[..lastUnderscoreIndex];
+        var rawKey = apiKeyReq;
 
         var apiKey = await _apiKeys.GetByKeyPrefitAsync(keyPrefix);
         if (apiKey is null)
@@ -175,4 +173,5 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
             ExpiresAt: apiKey.ExpiresAt
         ));
     }
+
 }

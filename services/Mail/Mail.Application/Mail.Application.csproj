@@ -11,7 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\shared\Bondy.Contracts\Bondy.Contracts.csproj" />
     <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Application\Bondy.SharedKernel.Application.csproj" />
     <ProjectReference Include="..\Mail.Domain\Mail.Domain.csproj" />
   </ItemGroup>

@@ -1,18 +1,17 @@
-﻿using Bondy.Contracts.Dtos.ApiKey;
-using Bondy.SharedKernel.Domain.Common;
-using Identity.Contracts.ApiKey;
+﻿using Bondy.SharedKernel.Domain.Common;
+using Identity.Application.Results.ApiKey;
 
 namespace Identity.Application.Services.ApiKey;
 
 public interface IApiKeyService
 {
-    Task<Result<ApiKeyCreatedResponse>> Create(CreateApiKeyRequest req);
+    Task<Result<ApiKeyCreatedResult>> Create(string name, string owner, string ownerEmail, IReadOnlyList<string> scopes, DateTimeOffset? expiresAt);
 
-    Task<Result<ApiKeyResponse>> Update(UpdateApiKeyRequest req);
+    Task<Result<ApiKeyResult>> Update(long apiKeyId, string name, IReadOnlyList<string> scopes, DateTimeOffset? expiresAt, bool? isActive);
 
-    Task<Result<ApiKeyCreatedResponse>> Rotate(RotateApiKeyRequest req);
+    Task<Result<ApiKeyCreatedResult>> Rotate(long apiKeyId);
 
     Task<Result> Revoke(string apiKeyId);
 
-    Task<Result<ApiKeyValidationResult>> Validate(ValidateApiKeyRequest req);
+    Task<Result<ApiKeyValidationResult>> Validate(string apiKey);
 }

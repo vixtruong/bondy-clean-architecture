@@ -1,6 +1,6 @@
 ﻿using Bondy.SharedKernel.Application.Querying;
 
-namespace Identity.Contracts.Users;
+namespace Identity.Api.Contracts.Users;
 
 public sealed record UserListRequest : PagedRequest
 {

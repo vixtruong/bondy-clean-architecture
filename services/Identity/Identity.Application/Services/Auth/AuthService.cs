@@ -1,7 +1,6 @@
-﻿using Bondy.Contracts.Dtos.Mail;
-using Bondy.Contracts.Enums.Mail;
-using Bondy.SharedKernel.Application.Authorization.Role;
+﻿using Bondy.SharedKernel.Application.Authorization.Role;
 using Bondy.SharedKernel.Application.Base;
+using Bondy.SharedKernel.Application.Commands;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
 using Google.Apis.Auth;
@@ -10,8 +9,8 @@ using Identity.Application.Abstractions.OAuth2;
 using Identity.Application.Abstractions.Repositories;
 using Identity.Application.Abstractions.Security;
 using Identity.Application.Exceptions;
-using Identity.Contracts.Auth;
-using Identity.Contracts.Otp;
+using Identity.Application.Results.Auth;
+using Identity.Application.Results.Otp;
 using Identity.Domain.Constants;
 using Identity.Domain.Entities;
 using Identity.Domain.Enums;
@@ -66,25 +65,25 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
     #region Main Methods
 
-    public async Task<Result<AuthTokens>> LoginAsync(LoginRequest request)
+    public async Task<Result<AuthTokensResult>> LoginAsync(string email, string password)
     {
-        Domain.Entities.User? user = await _users.GetByEmailAsync(Email.FromPersisted(request.Email));
+        Domain.Entities.User? user = await _users.GetByEmailAsync(Email.FromPersisted(email));
 
         if (user is null)
-            return Result.Failure<AuthTokens>(
+            return Result.Failure<AuthTokensResult>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
 
         if (!user.Active)
-            return Result.Failure<AuthTokens>(
+            return Result.Failure<AuthTokensResult>(
                 Error.Forbidden(ErrorCodes.Auth.UserInactive, "User is inactive"));
 
         Account? local = user.Accounts.FirstOrDefault(a => a.Provider == AuthProvider.Local);
         if (local?.PasswordHash is null)
-            return Result.Failure<AuthTokens>(
+            return Result.Failure<AuthTokensResult>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
 
-        if (!_hasher.Verify(request.Password, local.PasswordHash.Value))
-            return Result.Failure<AuthTokens>(
+        if (!_hasher.Verify(password, local.PasswordHash.Value))
+            return Result.Failure<AuthTokensResult>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidCredentials, "Invalid credentials"));
 
         var userForToken = await _users.GetByIdForTokenAsync(user.Id);
@@ -95,7 +94,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         string refreshToken = await GenerateRefreshToken(user.Id, newSessionId);
 
         return Result.Success(
-            new AuthTokens
+            new AuthTokensResult
             {
                 UserId = user.Id,
                 AccessToken = accessTokenResult.AccessToken,
@@ -106,7 +105,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
 
-    public async Task<Result<AuthTokens>> GoogleLoginAsync(GoogleLoginRequest req)
+    public async Task<Result<AuthTokensResult>> GoogleLoginAsync(string idToken)
     {
         var now = _clock.Now;
         var provider = AuthProvider.Google;
@@ -115,11 +114,11 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         try
         {
-            payload = await _googleTokenVerifier.VerifyAsync(req.IdToken);
+            payload = await _googleTokenVerifier.VerifyAsync(idToken);
         }
         catch (OAuth2TokenInvalidException ex)
         {
-            return Result.Failure<AuthTokens>(
+            return Result.Failure<AuthTokensResult>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidOAuth2Token, ex.Message));
         }
 
@@ -146,7 +145,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
             var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
             if (userRole is null)
-                return Result.Failure<AuthTokens>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
+                return Result.Failure<AuthTokensResult>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
 
             user.AssignRole(userRole);
 
@@ -183,7 +182,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
                     : "Your account already exists. We have successfully linked your Google login to it."
             };
 
-            await SendEmail(new SendEmailDto
+            await SendEmail(new SendEmailCommand
             {
                 To = user.Email.Value,
                 Purpose = EmailPurpose.OAuth2Welcome,
@@ -193,7 +192,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         }
 
         return Result.Success(
-            new AuthTokens
+            new AuthTokensResult
             {
                 UserId = user.Id,
                 AccessToken = accessTokenResult.AccessToken,
@@ -204,23 +203,29 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
 
-    public async Task<Result> RegisterInit(RegisterRequest req)
+    public async Task<Result> RegisterInit(
+        string email,
+        string firstName,
+        string? middleName,
+        string? lastName,
+        DateTime dob,
+        string password)
     {
-        var existed = await _users.ExistByEmailAsync(Email.FromPersisted(req.Email));
+        var existed = await _users.ExistByEmailAsync(Email.FromPersisted(email));
 
         if (existed)
             return Result.Failure(Error.Conflict(ErrorCodes.User.EmailAlreadyExist, "Email already exists."));
 
-        var preReg = await _preRegistrations.GetByEmailAsync(Email.FromPersisted(req.Email));
+        var preReg = await _preRegistrations.GetByEmailAsync(Email.FromPersisted(email));
 
         if (preReg == null)
         {
             preReg = new PreRegistration(
-                Email.FromPersisted(req.Email),
-                PersonName.FromPersisted(req.FirstName, req.MiddleName, req.LastName),
-                req.Dob,
+                Email.FromPersisted(email),
+                PersonName.FromPersisted(firstName, middleName, lastName),
+                dob,
                 null,
-                HashedValue.FromPersisted(_hasher.Hash(req.Password)),
+                HashedValue.FromPersisted(_hasher.Hash(password)),
                 _clock.Now
             );
 
@@ -233,7 +238,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         try
         {
             await _mailClient.SendEmailAsync(
-                new SendEmailDto
+                new SendEmailCommand
                 {
                     To = preReg.Email.Value,
                     Purpose = EmailPurpose.Registration,
@@ -255,12 +260,12 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             value: new { message = "OTP Code sent to your email." }, successCode: SuccessCodes.User.RegisterInit);
     }
 
-    public async Task<Result> RegisterVerify(VerifyOtpRequest req)
+    public async Task<Result> RegisterVerify(string email, string otp)
     {
         var now = _clock.Now;
-        var email = Email.FromPersisted(req.Email);
+        var emailValue = Email.FromPersisted(email);
 
-        var preReg = await _preRegistrations.GetByEmailAsync(email);
+        var preReg = await _preRegistrations.GetByEmailAsync(emailValue);
         if (preReg is null)
             return Result.Failure(
                 Error.NotFound(
@@ -271,7 +276,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         var otpResult = await ValidateAndConsumeOtp(
             subjectId: preReg.Id,
             purpose: OtpPurpose.VerifyEmail,
-            rawOtp: req.Otp,
+            rawOtp: otp,
             now: now);
 
         if (otpResult.IsFailure)
@@ -293,7 +298,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
         if (userRole is null)
-            return Result.Failure<AuthTokens>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
+            return Result.Failure<AuthTokensResult>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
 
         newUser.AssignRole(userRole);
 
@@ -302,7 +307,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         await _users.AddAsync(newUser);
         await _preRegistrations.RemoveAsync(preReg);
 
-        await SendEmail(new SendEmailDto
+        await SendEmail(new SendEmailCommand
         {
             To = newUser.Email.Value,
             Purpose = EmailPurpose.Welcome,
@@ -320,35 +325,37 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         );
     }
 
-    public async Task<Result<AuthTokens>> RefreshToken(RefreshTokenRequest req)
+    public async Task<Result<AuthTokensResult>> RefreshToken(long userId, string sessionId, string token)
     {
         var now = _clock.Now;
 
-        var tokens = await _refreshTokens.GetActiveTokensByUserIdAndSessionId(req.UserId, req.SessionId, now);
+        var tokens = await _refreshTokens.GetActiveTokensByUserIdAndSessionId(userId, sessionId, now);
 
-        var match = tokens.FirstOrDefault(r => _hasher.Verify(req.Token, r.TokenHash.Value));
+        var match = tokens.FirstOrDefault(r => _hasher.Verify(token, r.TokenHash.Value));
 
         if (match is null)
-            return Result<AuthTokens>.Failure(Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid refresh info"));
+            return Result<AuthTokensResult>.Failure(Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid refresh info"));
 
-        var accessTokenResult = _jwt.GenerateAccessToken(match.User);
-        var refreshToken = await GenerateRefreshToken(match.UserId, req.SessionId);
+        var userForToken = await _users.GetByIdForTokenAsync(match.UserId);
+
+        var accessTokenResult = _jwt.GenerateAccessToken(userForToken!);
+        var refreshToken = await GenerateRefreshToken(match.UserId, sessionId);
 
         return Result.Success(
-            new AuthTokens
+            new AuthTokensResult
             {
                 UserId = match.UserId,
                 AccessToken = accessTokenResult.AccessToken,
                 RefreshTokenRaw = refreshToken,
                 AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
-                SessionId = req.SessionId
+                SessionId = sessionId
             },
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
 
-    public async Task<Result> Logout(LogoutRequest req)
+    public async Task<Result> Logout(long userId, string sessionId)
     {
-        await _refreshTokens.RevokeTokens(req.UserId, req.SessionId, _clock.Now);
+        await _refreshTokens.RevokeTokens(userId, sessionId, _clock.Now);
 
         return Result.Success(SuccessCodes.Auth.LogoutSuccess);
     }
@@ -480,15 +487,15 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         return Result.Success(otp);
     }
 
-    private async Task SendEmail(SendEmailDto dto)
+    private async Task SendEmail(SendEmailCommand command)
     {
         try
         {
-            await _mailClient.SendEmailAsync(dto);
+            await _mailClient.SendEmailAsync(command);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Welcome mail failed for {Email}", dto.To);
+            _logger.LogWarning(ex, "Welcome mail failed for {Email}", command.To);
         }
     }
     #endregion

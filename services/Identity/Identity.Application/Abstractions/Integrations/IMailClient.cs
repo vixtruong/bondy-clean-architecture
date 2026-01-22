@@ -1,9 +1,9 @@
-﻿using Bondy.Contracts.Dtos.Mail;
-using Identity.Contracts.Mail;
+﻿using Bondy.SharedKernel.Application.Commands;
+using Identity.Application.Results.Mail;
 
 namespace Identity.Application.Abstractions.Integrations;
 
 public interface IMailClient
 {
-    Task<MailSendResult> SendEmailAsync(SendEmailDto dto);
+    Task<MailSendResult> SendEmailAsync(SendEmailCommand command);
 }

@@ -1,15 +1,21 @@
 ﻿
 using Bondy.SharedKernel.Domain.Common;
-using Identity.Contracts.Auth;
+using Identity.Application.Results.Auth;
 
 namespace Identity.Application.Services.Auth;
 
 public interface IAuthService
 {
-    Task<Result<AuthTokens>> LoginAsync(LoginRequest req);
-    Task<Result<AuthTokens>> GoogleLoginAsync(GoogleLoginRequest req);
-    Task<Result> RegisterInit(RegisterRequest req);
-    Task<Result> RegisterVerify(VerifyOtpRequest req);
-    Task<Result<AuthTokens>> RefreshToken(RefreshTokenRequest req);
-    Task<Result> Logout(LogoutRequest req);
+    Task<Result<AuthTokensResult>> LoginAsync(string email, string password);
+    Task<Result<AuthTokensResult>> GoogleLoginAsync(string idToken);
+    Task<Result> RegisterInit(
+        string email,
+        string firstName,
+        string? middleName,
+        string? lastName,
+        DateTime dob,
+        string password);
+    Task<Result> RegisterVerify(string email, string otp);
+    Task<Result<AuthTokensResult>> RefreshToken(long userId, string sessionId, string token);
+    Task<Result> Logout(long userId, string sessionId);
 }
