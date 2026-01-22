@@ -1,5 +1,7 @@
 ﻿using Bondy.Contracts.Dtos.Mail;
 using Bondy.ServiceDefaults.Http;
+using Bondy.SharedKernel.Application.Commands;
+using Mail.Api.Contracts;
 using Mail.Application.Services.Mail;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +19,6 @@ public class MailController : ControllerBase
     }
 
     [HttpPost("send")]
-    public async Task<IActionResult> SendEmail([FromBody] SendEmailDto dto)
-        => this.ToActionResult(await _service.SendEmail(dto));
+    public async Task<IActionResult> SendEmail([FromBody] SendEmailRequest request)
+        => this.ToActionResult(await _service.SendEmail(request.To, request.Purpose, request.Data, request.DedupTokenId));
 }

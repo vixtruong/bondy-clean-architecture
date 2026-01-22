@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Identity.Contracts.ApiKey;
+namespace Identity.Api.Contracts.ApiKey;
 
 public sealed record CreateApiKeyRequest
 {

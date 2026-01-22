@@ -1,4 +1,4 @@
-﻿namespace Identity.Contracts.Auth;
+﻿namespace Identity.Api.Contracts.Auth;
 
 public class RefreshTokenRequest
 {

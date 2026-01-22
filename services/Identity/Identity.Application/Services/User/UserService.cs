@@ -3,7 +3,7 @@ using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
 using Identity.Application.Abstractions.Repositories;
-using Identity.Contracts.Users;
+using Identity.Application.Results.Users;
 using Microsoft.Extensions.Logging;
 
 namespace Identity.Application.Services.User;
@@ -38,17 +38,17 @@ public class UserService : ApplicationServiceBase, IUserService
         throw new NotImplementedException();
     }
 
-    public async Task<Result<UserBasicResponse>> GetBasicProfile(long userId)
+    public async Task<Result<UserBasicResult>> GetBasicProfile(long userId)
     {
         var userBasic = await _users.GetBasicProfileByIdAsync(userId);
 
         if (userBasic == null)
-            return Result.Failure<UserBasicResponse>(Error.NotFound(ErrorCodes.Common.NotFound, "User not found"));
+            return Result.Failure<UserBasicResult>(Error.NotFound(ErrorCodes.Common.NotFound, "User not found"));
 
         return Result.Success(userBasic);
     }
 
-    public async Task<Result<List<UserBasicResponse>>> GetBasicProfiles(IReadOnlyCollection<long> userIds)
+    public async Task<Result<List<UserBasicResult>>> GetBasicProfiles(IReadOnlyCollection<long> userIds)
     {
         var userBasics = await _users.GetBasicProfilesByIdsAsync(userIds);
 

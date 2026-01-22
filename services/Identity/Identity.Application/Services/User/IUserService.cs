@@ -1,5 +1,5 @@
 ﻿using Bondy.SharedKernel.Domain.Common;
-using Identity.Contracts.Users;
+using Identity.Application.Results.Users;
 
 namespace Identity.Application.Services.User;
 
@@ -11,7 +11,7 @@ public interface IUserService
 
     Task<Result> UpdateProfile();
 
-    Task<Result<UserBasicResponse>> GetBasicProfile(long userId);
+    Task<Result<UserBasicResult>> GetBasicProfile(long userId);
 
-    Task<Result<List<UserBasicResponse>>> GetBasicProfiles(IReadOnlyCollection<long> userIds);
+    Task<Result<List<UserBasicResult>>> GetBasicProfiles(IReadOnlyCollection<long> userIds);
 }

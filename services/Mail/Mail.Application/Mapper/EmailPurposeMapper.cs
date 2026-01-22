@@ -1,4 +1,4 @@
-﻿using ContractsPurpose = Bondy.Contracts.Enums.Mail.EmailPurpose;
+﻿using ContractsPurpose = Bondy.SharedKernel.Application.Commands.EmailPurpose;
 using DomainPurpose = Mail.Domain.Enums.EmailPurpose;
 
 namespace Mail.Application.Mapper;

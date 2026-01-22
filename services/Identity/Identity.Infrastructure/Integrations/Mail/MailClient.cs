@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
-using Bondy.Contracts.Dtos.Mail;
+using Bondy.SharedKernel.Application.Commands;
 using Identity.Application.Abstractions.Integrations;
-using Identity.Contracts.Mail;
+using Identity.Application.Results.Mail;
 using Microsoft.Extensions.Logging;
 
 namespace Identity.Infrastructure.Integrations.Mail;
@@ -17,11 +17,11 @@ public sealed class MailClient : IMailClient
         _logger = logger;
     }
 
-    public async Task<MailSendResult> SendEmailAsync(SendEmailDto dto)
+    public async Task<MailSendResult> SendEmailAsync(SendEmailCommand command)
     {
         try
         {
-            using var resp = await _http.PostAsJsonAsync("/api/v1/mail/send", dto);
+            using var resp = await _http.PostAsJsonAsync("/api/v1/mail/send", command);
             var body = await resp.Content.ReadAsStringAsync();
 
             if (resp.IsSuccessStatusCode)

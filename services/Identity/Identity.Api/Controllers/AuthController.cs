@@ -1,11 +1,10 @@
 ﻿using Bondy.ServiceDefaults.Http;
-using Bondy.SharedKernel.Application.Authorization.Scopes;
 using Bondy.SharedKernel.Domain.Common;
+using Identity.Api.Contracts.Auth;
 using Identity.Api.Http;
+using Identity.Application.Results.Auth;
 using Identity.Application.Services.Auth;
-using Identity.Contracts.Auth;
 using Identity.Domain.Constants;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers
@@ -31,7 +30,7 @@ namespace Identity.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var result = await _service.LoginAsync(request);
+            var result = await _service.LoginAsync(request.Email, request.Password);
 
             return this.AuthResponse(result);
         }
@@ -39,7 +38,7 @@ namespace Identity.Api.Controllers
         [HttpPost("google")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
         {
-            var result = await _service.GoogleLoginAsync(request);
+            var result = await _service.GoogleLoginAsync(request.IdToken);
 
             return this.AuthResponse(result);
         }
@@ -47,11 +46,19 @@ namespace Identity.Api.Controllers
 
         [HttpPost("register/init")]
         public async Task<IActionResult> RegisterInit([FromBody] RegisterRequest request)
-                => this.ToActionResult(await _service.RegisterInit(request));
+                => this.ToActionResult(
+                    await _service.RegisterInit(
+                        request.Email,
+                        request.FirstName,
+                        request.MiddleName,
+                        request.LastName,
+                        request.Dob,
+                        request.Password)
+                    );
 
         [HttpPost("register/verify")]
         public async Task<IActionResult> RegisterVerify([FromBody] VerifyOtpRequest request)
-            => this.ToActionResult(await _service.RegisterVerify(request));
+            => this.ToActionResult(await _service.RegisterVerify(request.Email, request.Otp));
 
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh()
@@ -61,22 +68,16 @@ namespace Identity.Api.Controllers
             var sessionId = Request.Cookies["sessionId"];
 
             if (string.IsNullOrWhiteSpace(rt) || string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(sessionId))
-                return this.ToActionResult(Result.Failure<AuthResponse>(
+                return this.ToActionResult(Result.Failure<AuthResult>(
                     Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid refresh info")));
 
             if (!long.TryParse(uid, out var userId))
             {
-                return this.ToActionResult(Result.Failure<AuthResponse>(
+                return this.ToActionResult(Result.Failure<AuthResult>(
                     Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid user id format")));
             }
 
-            var result = await _service.RefreshToken(
-                new RefreshTokenRequest
-                {
-                    Token = rt,
-                    UserId = userId,
-                    SessionId = sessionId,
-                });
+            var result = await _service.RefreshToken(userId, sessionId, rt);
 
             return this.AuthResponse(result);
         }
@@ -88,21 +89,16 @@ namespace Identity.Api.Controllers
             var sessionId = Request.Cookies["sessionId"];
 
             if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(sessionId))
-                return this.ToActionResult(Result.Failure<AuthResponse>(
+                return this.ToActionResult(Result.Failure<AuthResult>(
                     Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid logout info")));
 
             if (!long.TryParse(uid, out var userId))
             {
-                return this.ToActionResult(Result.Failure<AuthResponse>(
+                return this.ToActionResult(Result.Failure<AuthResult>(
                     Error.Unauthorized(ErrorCodes.Auth.Unauthorized, "Invalid user id format")));
             }
 
-            var result = await _service.Logout(
-                new LogoutRequest
-                {
-                    UserId = userId,
-                    SessionId = sessionId
-                });
+            var result = await _service.Logout(userId, sessionId);
 
             if (result.IsSuccess)
                 Response.ClearRefreshInfoCookies(Request);
@@ -115,7 +111,7 @@ namespace Identity.Api.Controllers
 
         #region Support Methods
 
-        private IActionResult AuthResponse(Result<AuthTokens> result)
+        private IActionResult AuthResponse(Result<AuthTokensResult> result)
         {
             if (result.IsSuccess)
             {
@@ -127,7 +123,7 @@ namespace Identity.Api.Controllers
                     days: TokenPolicy.RefreshTokenDays);
 
                 return this.ToActionResult(Result.Success(
-                    new AuthResponse
+                    new AuthResult
                     {
                         AccessToken = result.Value.AccessToken,
                         AccessTokenMinutes = result.Value.AccessTokenMinutes
@@ -135,7 +131,7 @@ namespace Identity.Api.Controllers
                     successCode: SuccessCodes.Auth.LoginSuccess));
             }
 
-            return this.ToActionResult(Result.Failure<AuthResponse>(result.Error));
+            return this.ToActionResult(Result.Failure<AuthResult>(result.Error));
         }
 
         #endregion

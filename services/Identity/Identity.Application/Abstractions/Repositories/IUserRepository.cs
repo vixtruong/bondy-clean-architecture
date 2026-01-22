@@ -1,5 +1,5 @@
 ﻿using Bondy.SharedKernel.Application.Querying;
-using Identity.Contracts.Users;
+using Identity.Application.Results.Users;
 using Identity.Domain.Entities;
 using Identity.Domain.ValueObjects;
 
@@ -16,13 +16,13 @@ public interface IUserRepository
     Task<User?> GetByIdAsync(long id);
     Task<User?> GetByIdForTokenAsync(long userId);
 
-    Task<List<UserBasicResponse>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds);
+    Task<List<UserBasicResult>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds);
 
-    Task<UserBasicResponse?> GetBasicProfileByIdAsync(long userId);
+    Task<UserBasicResult?> GetBasicProfileByIdAsync(long userId);
 
     Task<List<User>> SearchByEmailContainsAsync(string emailPart);
 
-    Task<PagedResult<UserBasicResponse>> GetAllBasicProfilesAsync(int pageNumber, int pageSize);
+    Task<PagedResult<UserBasicResult>> GetAllBasicProfilesAsync(int pageNumber, int pageSize);
 
     Task<bool> ExistByEmailAsync(Email email);
 }

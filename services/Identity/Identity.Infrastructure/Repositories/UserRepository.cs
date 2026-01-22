@@ -2,7 +2,7 @@
 using Bondy.SharedKernel.Infrastructure.Common.Querying;
 using Identity.Application.Abstractions.Persistence;
 using Identity.Application.Abstractions.Repositories;
-using Identity.Contracts.Users;
+using Identity.Application.Results.Users;
 using Identity.Domain.Entities;
 using Identity.Domain.ValueObjects;
 using Identity.Infrastructure.Repositories.Base;
@@ -61,14 +61,14 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .FirstOrDefaultAsync(u => u.Id == userId);
     }
 
-    public Task<List<UserBasicResponse>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds)
+    public Task<List<UserBasicResult>> GetBasicProfilesByIdsAsync(IReadOnlyCollection<long> userIds)
     {
-        if (userIds.Count == 0) return Task.FromResult(new List<UserBasicResponse>());
+        if (userIds.Count == 0) return Task.FromResult(new List<UserBasicResult>());
 
         return _db.Users
             .AsNoTracking()
             .Where(u => userIds.Contains(u.Id))
-            .Select(u => new UserBasicResponse(
+            .Select(u => new UserBasicResult(
                 u.Id,
                 u.Name.ToString(),
                 u.AvatarUrl
@@ -76,12 +76,12 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .ToListAsync();
     }
 
-    public Task<UserBasicResponse?> GetBasicProfileByIdAsync(long userId)
+    public Task<UserBasicResult?> GetBasicProfileByIdAsync(long userId)
     {
         return _db.Users
             .AsNoTracking()
             .Where(u => u.Id == userId)
-            .Select(u => new UserBasicResponse(
+            .Select(u => new UserBasicResult(
                 u.Id,
                 u.Name.ToString(),
                 u.AvatarUrl
@@ -100,7 +100,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
             .ToListAsync();
     }
 
-    public Task<PagedResult<UserBasicResponse>> GetAllBasicProfilesAsync(int pageNumber, int pageSize)
+    public Task<PagedResult<UserBasicResult>> GetAllBasicProfilesAsync(int pageNumber, int pageSize)
     {
         var q = _db.Users
             .AsNoTracking()
@@ -109,7 +109,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
         return q.ToPagedResultAsync(
             pageNumber,
             pageSize,
-            u => new UserBasicResponse(
+            u => new UserBasicResult(
                 u.Id,
                 u.Name.ToString(),
                 u.AvatarUrl

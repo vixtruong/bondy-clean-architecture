@@ -1,5 +1,4 @@
-﻿using Bondy.Contracts.Dtos.Mail;
-using Bondy.SharedKernel.Application.Base;
+﻿using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
 using Mail.Application.Abstractions.Repositories;
@@ -12,6 +11,7 @@ using Mail.Domain.Enums;
 using Mail.Domain.ValueObjects;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using CommandEmailPurpose = Bondy.SharedKernel.Application.Commands.EmailPurpose;
 
 namespace Mail.Application.Services.Mail;
 
@@ -23,7 +23,6 @@ public sealed class MailService : ApplicationServiceBase, IMailService
     private readonly ITemplateRenderer _renderer;
     private readonly ITemplateProvider _provider;
     private readonly IEmailSender _sender;
-
 
     #endregion
 
@@ -41,15 +40,15 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         _sender = sender;
     }
 
-    public async Task<Result> SendEmail(SendEmailDto dto)
+    public async Task<Result> SendEmail(string to, CommandEmailPurpose purposeReq, Dictionary<string, string> data, string? dedupTokenId)
     {
         var now = _clock.Now;
-        var purpose = dto.Purpose.ToDomain();
+        var purpose = purposeReq.ToDomain();
 
         var spec = TemplateCatalog.Get(purpose);
 
         var missing = spec.RequiredKeys
-            .Where(k => !dto.Data.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
+            .Where(k => data.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
             .ToArray();
 
         if (missing.Length > 0)
@@ -63,14 +62,14 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         var layout = await _provider.GetAsync(TemplateDefinitions.Layout.FileName);
         var content = await _provider.GetAsync(spec.FileName);
 
-        var model = dto.Data.ToRenderModel();
+        var model = data.ToRenderModel();
         var html = _renderer.Render(layout, content, model);
 
-        var dedupKey = BuildDedupKey(purpose, dto);
+        var dedupKey = BuildDedupKey(purpose, to, dedupTokenId);
 
         var outbox = new EmailOutbox(
             purpose,
-            Email.FromPersisted(dto.To),
+            Email.FromPersisted(to),
             spec.Subject,
             JsonSerializer.Serialize(model),
             html,
@@ -83,10 +82,10 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         }
         catch (Exception e)
         {
-            _logger.LogError("Email enqueued fail Purpose={Purpose}, To={To}, DedupTokenId={DedupTokenId}", purpose, dto.To, dto.DedupTokenId ?? "");
+            _logger.LogError("Email enqueued fail Purpose={Purpose}, To={To}, DedupTokenId={DedupTokenId}", purpose, to, dedupTokenId ?? "");
         }
 
-        _logger.LogInformation("Email enqueued. Purpose={Purpose}, To={To}, OutboxId={LogId}", purpose, dto.To, outbox.Id);
+        _logger.LogInformation("Email enqueued. Purpose={Purpose}, To={To}, OutboxId={LogId}", purpose, to, outbox.Id);
 
         return Result.Success(SuccessCodes.Mail.Enqueued);
     }
@@ -98,21 +97,22 @@ public sealed class MailService : ApplicationServiceBase, IMailService
 
     private static string BuildDedupKey(
         EmailPurpose purpose,
-        SendEmailDto dto)
+        string to,
+        string? dedupTokenId)
     {
         return purpose switch
         {
             EmailPurpose.Registration =>
-                MailDedupKey.Otp(dto.To, dto.Purpose.ToString(), dto.DedupTokenId!),
+                MailDedupKey.Otp(to, purpose.ToString(), dedupTokenId!),
 
             EmailPurpose.ResetPassword =>
-                MailDedupKey.Otp(dto.To, dto.Purpose.ToString(), dto.DedupTokenId!),
+                MailDedupKey.Otp(to, purpose.ToString(), dedupTokenId!),
 
             EmailPurpose.Welcome =>
-                MailDedupKey.Welcome(dto.DedupTokenId!),
+                MailDedupKey.Welcome(dedupTokenId!),
             
             EmailPurpose.OAuth2Welcome =>
-                MailDedupKey.OAuth2Welcome(dto.DedupTokenId!),
+                MailDedupKey.OAuth2Welcome(dedupTokenId!),
 
             _ => throw new ArgumentOutOfRangeException(nameof(purpose), purpose, null)
         };
