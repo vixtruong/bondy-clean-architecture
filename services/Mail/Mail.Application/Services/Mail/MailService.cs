@@ -24,14 +24,10 @@ public sealed class MailService : ApplicationServiceBase, IMailService
     private readonly ITemplateProvider _provider;
     private readonly IEmailSender _sender;
 
-    #endregion
-
-    #region Main Methods
-
-    public MailService(ILogger<MailService> logger, 
-        IClock clock, IMailRepository mail, 
-        ITemplateRenderer renderer, 
-        ITemplateProvider provider, 
+    public MailService(ILogger<MailService> logger,
+        IClock clock, IMailRepository mail,
+        ITemplateRenderer renderer,
+        ITemplateProvider provider,
         IEmailSender sender) : base(logger, clock)
     {
         _mail = mail;
@@ -39,6 +35,10 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         _provider = provider;
         _sender = sender;
     }
+
+    #endregion
+
+    #region Main Methods
 
     public async Task<Result> SendEmail(string to, CommandEmailPurpose purposeReq, Dictionary<string, string> data, string? dedupTokenId)
     {
@@ -48,7 +48,7 @@ public sealed class MailService : ApplicationServiceBase, IMailService
         var spec = TemplateCatalog.Get(purpose);
 
         var missing = spec.RequiredKeys
-            .Where(k => data.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
+            .Where(k => !data.TryGetValue(k, out var v) || string.IsNullOrWhiteSpace(v))
             .ToArray();
 
         if (missing.Length > 0)
