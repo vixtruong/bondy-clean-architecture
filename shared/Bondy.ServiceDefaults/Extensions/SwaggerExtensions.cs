@@ -32,11 +32,12 @@ public static class SwaggerExtensions
             // ===== API KEY =====
             c.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
             {
-                Description = "API Key Authorization using X-API-KEY header",
-                Name = "X-API-KEY",
+                Description = "API Key Authorization. Example: \"ApiKey your_api_key_here\"",
+                Name = "Authorization",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.ApiKey
             });
+
 
             // ===== JWT OR API KEY =====
             c.AddSecurityRequirement(new OpenApiSecurityRequirement

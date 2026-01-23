@@ -60,7 +60,7 @@
       ],
       "SwaggerKey": "mail",
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": "Bearer",
+        "AuthenticationProviderKey": "ApiKey",
         "AllowedScopes": []
       }
     }

@@ -41,6 +41,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
     public Task<User?> GetByEmailAsync(Email email)
     {
         return _db.Users
+            .AsSplitQuery()
             .AsNoTracking()
             .Include(u => u.Accounts)
             .FirstOrDefaultAsync(u => u.Email == email);
@@ -54,6 +55,7 @@ public sealed class UserRepository : RepositoryBase, IUserRepository
     public Task<User?> GetByIdForTokenAsync(long userId)
     {
         return _db.Users
+            .AsSplitQuery()
             .Include(u => u.Roles)
                 .ThenInclude(r => r.Scopes)
             .Include(u => u.GrantedScopes)

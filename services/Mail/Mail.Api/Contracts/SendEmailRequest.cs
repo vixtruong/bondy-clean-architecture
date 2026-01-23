@@ -8,11 +8,11 @@ namespace Mail.Api.Contracts;
 /// </summary>
 public sealed class SendEmailRequest
 {
-    [Required(ErrorMessage = "To Email is require.")]
+    [Required(ErrorMessage = "ToEmail is required.")]
     [EmailAddress]
     public string To { get; set; } = default!;
 
-    [Required(ErrorMessage = "Purpose is require.")]
+    [Required(ErrorMessage = "Purpose is required.")]
     public EmailPurpose Purpose { get; set; }
 
     [Required]
