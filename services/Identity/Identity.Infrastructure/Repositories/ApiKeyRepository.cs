@@ -38,7 +38,8 @@ public class ApiKeyRepository : RepositoryBase, IApiKeyRepository
 
     public async Task AddAsync(ApiKey apiKey)
     {
-        throw new NotImplementedException();
+        _db.ApiKeys.Add(apiKey);
+        await _db.SaveChangesAsync();
     }
 
     public async Task<int> UpdateAsync(ApiKey apiKey)
@@ -73,6 +74,7 @@ public class ApiKeyRepository : RepositoryBase, IApiKeyRepository
 
     public async Task<int> TouchAsync(ApiKey apiKey)
     {
-        throw new NotImplementedException();
+        _db.ApiKeys.Update(apiKey);
+        return await _db.SaveChangesAsync();
     }
 }

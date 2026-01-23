@@ -1,5 +1,5 @@
+using ApiGateway.Authentication;
 using ApiGateway.Clients.Identity;
-using ApiGateway.Extensions.Auth;
 using ApiGateway.Middlewares.Auth;
 using ApiGateway.Middlewares.Error;
 using Ocelot.DependencyInjection;
@@ -27,7 +27,7 @@ public class Program
             .AddJsonFile($"ocelot.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: true)
             .AddJsonFile($"swagger.{builder.Environment.EnvironmentName}.json", optional: false, reloadOnChange: true);
 
-        builder.Services.AddGatewayJwtAuth(builder.Configuration);
+        builder.Services.AddGatewayAuthentication(builder.Configuration);
 
         builder.Services.AddOcelot(builder.Configuration).AddPolly();
         builder.Services.AddSwaggerForOcelot(builder.Configuration);
@@ -63,8 +63,10 @@ public class Program
         app.UseAuthentication();
 
         // Register our middlewares BEFORE UseOcelot so headers exist for Ocelot to forward
-        app.UseMiddleware<ApiKeyGatewayMiddleware>();
-        app.UseMiddleware<JwtGatewayMiddleware>();
+        //app.UseMiddleware<ApiKeyGatewayMiddleware>();
+        //app.UseMiddleware<Middlewares.Auth.JwtGatewayMiddleware>();
+
+        app.UseMiddleware<IdentityForwardingMiddleware>();
 
         // Error envelope should wrap Ocelot call, so register it before UseOcelot.
         app.UseMiddleware<GatewayErrorEnvelopeMiddleware>();

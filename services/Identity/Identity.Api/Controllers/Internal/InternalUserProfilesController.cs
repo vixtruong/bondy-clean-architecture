@@ -9,11 +9,11 @@ namespace Identity.Api.Controllers.Internal;
 [ApiController]
 [Route("api/v1/internal/user-profiles")]
 [Authorize(Policy = ProfileScopes.Read)]
-public class UserProfilesInternalController : ControllerBase
+public class InternalUserProfilesController : ControllerBase
 {
     private readonly IUserService _service;
 
-    public UserProfilesInternalController(IUserService service)
+    public InternalUserProfilesController(IUserService service)
     {
         _service = service;
     }

@@ -5,10 +5,10 @@ using Identity.Application.Services.ApiKey;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Identity.Api.Controllers;
+namespace Identity.Api.Controllers.Admin;
 
 [ApiController]
-[Route("ap1/v1/[controller]")]
+[Route("api/v1/admin/[controller]")]
 [Authorize]
 public class ApiKeysController : ControllerBase
 {

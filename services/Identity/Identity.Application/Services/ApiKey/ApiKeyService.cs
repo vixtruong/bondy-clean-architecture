@@ -1,4 +1,5 @@
-﻿using Bondy.SharedKernel.Application.Base;
+﻿using Bondy.SharedKernel.Application.Authorization;
+using Bondy.SharedKernel.Application.Base;
 using Bondy.SharedKernel.Domain.Abstractions;
 using Bondy.SharedKernel.Domain.Common;
 using Identity.Application.Abstractions.Repositories;
@@ -32,6 +33,27 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
     {
         var now = _clock.Now;
 
+        var normalizedInput = scopes
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .ToArray();
+
+        var invalidScopes = normalizedInput
+            .Except(ScopesAll.All, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (invalidScopes.Length > 0)
+        {
+            return Result<ApiKeyCreatedResult>.Failure(
+                Error.Validation(ErrorCodes.Validation.Argument, $"Invalid scopes: {string.Join(", ", invalidScopes)}"));
+        }
+
+        var distinctScopes = normalizedInput
+            .Select(s => new Scope(s))
+            .GroupBy(s => s.Value, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToArray();
+
         var apiKeyGen = _apiKeyGenerator.Generate(now);
         var rawApiKey = apiKeyGen.rawKey;
         var keyPrefix = apiKeyGen.prefix;
@@ -44,7 +66,7 @@ public sealed class ApiKeyService : ApplicationServiceBase, IApiKeyService
             keyHash: HashedValue.FromPersisted(keyHash),
             owner: owner,
             ownerEmail: Email.FromPersisted(ownerEmail),
-            scopes: scopes.Select(scope => new Scope(scope)),
+            scopes: distinctScopes,
             allowedPaths: null,
             rateLimitPlanId: null,
             expiresAt: expiresAt,

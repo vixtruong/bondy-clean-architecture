@@ -1,6 +1,4 @@
 using Bondy.ServiceDefaults;
-using Bondy.ServiceDefaults.Extensions;
-using Bondy.ServiceDefaults.Middlewares;
 using Mail.Application;
 using Mail.Infrastructure;
 
