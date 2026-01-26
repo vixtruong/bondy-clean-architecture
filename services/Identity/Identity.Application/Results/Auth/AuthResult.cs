@@ -14,4 +14,5 @@ public sealed class AuthTokensResult
     public long UserId { get; set; }
     public string RefreshTokenRaw { get; init; } = default!;
     public string SessionId { get; init; } = default!;
+    public string? RedirectUrl { get; init; }
 }

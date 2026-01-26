@@ -7,7 +7,6 @@ namespace Identity.Application.Services.Auth;
 public interface IAuthService
 {
     Task<Result<AuthTokensResult>> LoginAsync(string email, string password);
-    Task<Result<AuthTokensResult>> GoogleLoginAsync(string idToken);
     Task<Result> RegisterInit(
         string email,
         string firstName,
@@ -18,4 +17,23 @@ public interface IAuthService
     Task<Result> RegisterVerify(string email, string otp);
     Task<Result<AuthTokensResult>> RefreshToken(long userId, string sessionId, string token);
     Task<Result> Logout(long userId, string sessionId);
+
+    #region OAuth2
+
+    string BuildGoogleAuthorizationUri(string state);
+    string BuildDiscordAuthorizationUri(string? state = null);
+
+
+    /// <summary>
+    /// Handle Google OAuth callback (?code=...)
+    /// </summary>
+    Task<Result<AuthTokensResult>> HandleGoogleCallbackAsync(string code, string state);
+
+
+    /// <summary>
+    /// Handle Discord OAuth callback (?code=...)
+    /// </summary>
+    Task<Result<AuthTokensResult>> HandleDiscordCallbackAsync(string code, string? error);
+
+    #endregion
 }

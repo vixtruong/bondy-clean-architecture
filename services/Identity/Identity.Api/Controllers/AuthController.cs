@@ -1,18 +1,20 @@
 ﻿using Bondy.ServiceDefaults.Http;
 using Bondy.SharedKernel.Domain.Common;
 using Identity.Api.Contracts.Auth;
+using Identity.Api.Controllers.Base;
 using Identity.Api.Http;
 using Identity.Application.Results.Auth;
 using Identity.Application.Services.Auth;
 using Identity.Domain.Constants;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.Api.Controllers
 {
     [ApiController]
     //[AllowAnonymous]
     [Route("api/v1/[controller]")]
-    public class AuthController : ControllerBase
+    public class AuthController : AuthControllerBase
     {
         #region Constructor
 
@@ -27,7 +29,7 @@ namespace Identity.Api.Controllers
 
         #region Api Actions
 
-        [HttpPost("login")]
+        [HttpPost("local/login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _service.LoginAsync(request.Email, request.Password);
@@ -35,14 +37,13 @@ namespace Identity.Api.Controllers
             return this.AuthResponse(result);
         }
 
-        [HttpPost("google")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
-        {
-            var result = await _service.GoogleLoginAsync(request.IdToken);
+        //[HttpPost("google/login")]
+        //public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+        //{
+        //    var result = await _service.GoogleLoginAsync(request.IdToken);
 
-            return this.AuthResponse(result);
-        }
-
+        //    return this.AuthResponse(result);
+        //}
 
         [HttpPost("register/init")]
         public async Task<IActionResult> RegisterInit([FromBody] RegisterRequest request)
@@ -109,31 +110,31 @@ namespace Identity.Api.Controllers
 
         #endregion
 
-        #region Support Methods
+        //#region Support Methods
 
-        private IActionResult AuthResponse(Result<AuthTokensResult> result)
-        {
-            if (result.IsSuccess)
-            {
-                Response.SetRefreshInfoCookie(
-                    Request,
-                    userId: result.Value!.UserId,
-                    refreshTokenRaw: result.Value!.RefreshTokenRaw,
-                    sessionId: result.Value!.SessionId,
-                    days: TokenPolicy.RefreshTokenDays);
+        //private IActionResult AuthResponse(Result<AuthTokensResult> result)
+        //{
+        //    if (result.IsSuccess)
+        //    {
+        //        Response.SetRefreshInfoCookie(
+        //            Request,
+        //            userId: result.Value!.UserId,
+        //            refreshTokenRaw: result.Value!.RefreshTokenRaw,
+        //            sessionId: result.Value!.SessionId,
+        //            days: TokenPolicy.RefreshTokenDays);
 
-                return this.ToActionResult(Result.Success(
-                    new AuthResult
-                    {
-                        AccessToken = result.Value.AccessToken,
-                        AccessTokenMinutes = result.Value.AccessTokenMinutes
-                    },
-                    successCode: SuccessCodes.Auth.LoginSuccess));
-            }
+        //        return this.ToActionResult(Result.Success(
+        //            new AuthResult
+        //            {
+        //                AccessToken = result.Value.AccessToken,
+        //                AccessTokenMinutes = result.Value.AccessTokenMinutes
+        //            },
+        //            successCode: SuccessCodes.Auth.LoginSuccess));
+        //    }
 
-            return this.ToActionResult(Result.Failure<AuthResult>(result.Error));
-        }
+        //    return this.ToActionResult(Result.Failure<AuthResult>(result.Error));
+        //}
 
-        #endregion
+        //#endregion
     }
 }
