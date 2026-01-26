@@ -32,9 +32,10 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
     private readonly IMailClient _mailClient;
     private readonly IOtpCodeRepository _otpCodes;
     private readonly IOtpGenerator _otpGenerator;
-    private readonly IGoogleTokenVerifier _googleTokenVerifier;
+    private readonly IGoogleVerifier _googleVerifier;
     private readonly ITempPasswordGenerator _tempPasswordGenerator;
     private readonly IRoleRepository _roles;
+    private readonly IDiscordVerifier _discordVerifier;
 
     public AuthService(ILogger<AuthService> logger, 
         IClock clock, 
@@ -45,8 +46,10 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         IMailClient mailClient, 
         IOtpCodeRepository otpCodes, 
         IOtpGenerator otpGenerator, 
-        IGoogleTokenVerifier googleTokenVerifier, 
-        ITempPasswordGenerator tempPasswordGenerator, IRoleRepository roles) : base(logger, clock)
+        IGoogleVerifier googleVerifier, 
+        ITempPasswordGenerator tempPasswordGenerator, 
+        IRoleRepository roles, 
+        IDiscordVerifier discordVerifier) : base(logger, clock)
     {
         _users = users;
         _refreshTokens = refreshTokens;
@@ -56,9 +59,10 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         _mailClient = mailClient;
         _otpCodes = otpCodes;
         _otpGenerator = otpGenerator;
-        _googleTokenVerifier = googleTokenVerifier;
+        _googleVerifier = googleVerifier;
         _tempPasswordGenerator = tempPasswordGenerator;
         _roles = roles;
+        _discordVerifier = discordVerifier;
     }
 
     #endregion
@@ -105,8 +109,46 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
             successCode: SuccessCodes.Auth.LoginSuccess);
     }
 
-    public async Task<Result<AuthTokensResult>> GoogleLoginAsync(string idToken)
+    #region OAuth2
+
+    //public async Task<Result<AuthTokensResult>> GoogleLoginAsync(string idToken)
+    //{
+    //    var now = _clock.Now;
+    //    var provider = AuthProvider.Google;
+
+    //    GoogleJsonWebSignature.Payload payload;
+
+    //    try
+    //    {
+    //        payload = await _googleVerifier.VerifyTokenAsync(idToken);
+    //    }
+    //    catch (OAuth2Exception ex)
+    //    {
+    //        return Result.Failure<AuthTokensResult>(
+    //            Error.Unauthorized(ErrorCodes.Auth.InvalidOAuth2Token, ex.Message));
+    //    }
+
+    //    var email = Email.FromPersisted(payload.Email);
+
+    //    return await ProcessOAuthLoginAsync(provider, email, payload.GivenName, payload.FamilyName, payload.Picture, now);
+    //}
+
+    public string BuildGoogleAuthorizationUri(string state)
     {
+        return _googleVerifier.BuildAuthorizationUrl(state);
+    }
+
+    public string BuildDiscordAuthorizationUri(string? state = null)
+    {
+        return _discordVerifier.BuildAuthorizationUrl(state);
+    }
+
+
+    public async Task<Result<AuthTokensResult>> HandleGoogleCallbackAsync(string code, string state)
+    {
+        if (string.IsNullOrWhiteSpace(state))
+            return Result.Failure<AuthTokensResult>(Error.Validation(ErrorCodes.Validation.Argument, "State must not null or empty."));
+
         var now = _clock.Now;
         var provider = AuthProvider.Google;
 
@@ -114,9 +156,9 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         try
         {
-            payload = await _googleTokenVerifier.VerifyAsync(idToken);
+            payload = await _googleVerifier.AuthenticateAsync(code);
         }
-        catch (OAuth2TokenInvalidException ex)
+        catch (OAuth2Exception ex)
         {
             return Result.Failure<AuthTokensResult>(
                 Error.Unauthorized(ErrorCodes.Auth.InvalidOAuth2Token, ex.Message));
@@ -124,84 +166,35 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         var email = Email.FromPersisted(payload.Email);
 
-        var user = await _users.GetByEmailAsync(email);
-
-        bool shouldSendWelcomeEmail = false;
-        string? tempPassword = null;
-
-        if (user is null)
-        {
-            user = new Domain.Entities.User(
-                email,
-                PersonName.FromPersisted(payload.GivenName, "", payload.FamilyName),
-                now,
-                avatarUrl: payload.Picture);
-
-            tempPassword = _tempPasswordGenerator.Generate();
-            var passwordHash = _hasher.Hash(tempPassword);
-
-            user.AddLocalAccount(
-                HashedValue.FromPersisted(passwordHash), now);
-
-            var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
-            if (userRole is null)
-                return Result.Failure<AuthTokensResult>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
-
-            user.AssignRole(userRole);
-
-            user.AddSocialAccount(provider, now);
-
-            shouldSendWelcomeEmail = true;
-
-            await _users.AddAsync(user);
-        }
-        else if (!user.HasAccount(provider))
-        {
-            user.AddSocialAccount(provider, now);
-            await _users.UpdateAsync(user);
-            shouldSendWelcomeEmail = true;
-        }
-
-        var userForToken = await _users.GetByIdForTokenAsync(user.Id);
-
-        var accessTokenResult = _jwt.GenerateAccessToken(userForToken!);
-
-        var sessionId = Guid.NewGuid().ToString("N");
-        var refreshToken = await GenerateRefreshToken(user.Id, sessionId);
-
-        if (shouldSendWelcomeEmail)
-        {
-            var data = new Dictionary<string, string>
-            {
-                ["firstName"] = user.Name.FirstName,
-                ["provider"] = provider.ToString(),
-                ["email"] = user.Email.Value,
-                ["hasPassword"] = (tempPassword != null).ToString().ToLower(),
-                ["password"] = tempPassword != null
-                    ? tempPassword
-                    : "Your account already exists. We have successfully linked your Google login to it."
-            };
-
-            await SendEmail(new SendEmailCommand
-            {
-                To = user.Email.Value,
-                Purpose = EmailPurpose.OAuth2Welcome,
-                Data = data,
-                DedupTokenId = user.Id.ToString()
-            });
-        }
-
-        return Result.Success(
-            new AuthTokensResult
-            {
-                UserId = user.Id,
-                AccessToken = accessTokenResult.AccessToken,
-                RefreshTokenRaw = refreshToken,
-                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
-                SessionId = sessionId
-            },
-            successCode: SuccessCodes.Auth.LoginSuccess);
+        return await ProcessOAuthLoginAsync(provider, email, payload.GivenName, payload.FamilyName, payload.Picture, now);
     }
+
+    public async Task<Result<AuthTokensResult>> HandleDiscordCallbackAsync(string code, string? error)
+    {
+        if (!string.IsNullOrWhiteSpace(error))
+            return Result.Failure<AuthTokensResult>(Error.BadRequest(ErrorCodes.Auth.OAuth2DiscordError, error));
+
+        var provider = AuthProvider.Discord;
+        var now = _clock.Now;
+
+        DiscordUser user;
+
+        try
+        {
+            user = await _discordVerifier.AuthenticateAsync(code);
+        }
+        catch (OAuth2Exception ex)
+        {
+            return Result.Failure<AuthTokensResult>(
+                Error.Unauthorized(ErrorCodes.Auth.InvalidOAuth2Token, ex.Message));
+        }
+
+        var email = Email.FromPersisted(user.Email);
+
+        return await ProcessOAuthLoginAsync(provider, email, user.Username, null, user.AvatarUrl, now);
+    }
+
+    #endregion
 
     public async Task<Result> RegisterInit(
         string email,
@@ -359,7 +352,7 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
 
         return Result.Success(SuccessCodes.Auth.LogoutSuccess);
     }
-
+    
     #endregion
 
     #region Support Methods
@@ -497,6 +490,116 @@ public sealed class AuthService : ApplicationServiceBase, IAuthService
         {
             _logger.LogWarning(ex, "Welcome mail failed for {Email}", command.To);
         }
+    }
+
+    /// <summary>
+    /// Handles OAuth2 login for users authenticated via third-party providers (Google, Discord, etc.).
+    /// 
+    /// - Looks up the user by verified email:
+    ///   • If the user does not exist, creates a new user with a temporary local account,
+    ///     assigns the default role, links the social provider account,
+    ///     and marks the user for a welcome email.
+    ///   • If the user exists but is not linked to the provider, links the social account
+    ///     and marks the user for a notification email.
+    /// 
+    /// - Generates access token, refresh token, and session information.
+    /// - Sends a welcome or account-linking email when applicable.
+    /// </summary>
+    /// <param name="provider">The OAuth2 provider used for authentication (e.g., Google, Discord).</param>
+    /// <param name="email">The verified email address returned by the provider.</param>
+    /// <param name="givenName">The user's given name from the provider (optional).</param>
+    /// <param name="familyName">The user's family name from the provider (optional).</param>
+    /// <param name="avatarUrl">The user's avatar URL from the provider (optional).</param>
+    /// <param name="now">The current timestamp used for auditing and token generation.</param>
+    /// <returns>
+    /// A result containing access and refresh tokens with session details if successful;
+    /// otherwise, a failure result describing the authentication error.
+    /// </returns>
+    private async Task<Result<AuthTokensResult>> ProcessOAuthLoginAsync(
+        AuthProvider provider,
+        Email email,
+        string givenName,
+        string? familyName,
+        string? avatarUrl,
+        DateTime now)
+    {
+        bool shouldSendWelcomeEmail = false;
+        string? tempPassword = null;
+
+        var user = await _users.GetByEmailAsync(email);
+
+        if (user is null)
+        {
+            user = new Domain.Entities.User(
+                email,
+                PersonName.FromPersisted(givenName, "", familyName),
+                now,
+                avatarUrl: avatarUrl);
+
+            tempPassword = _tempPasswordGenerator.Generate();
+            var passwordHash = _hasher.Hash(tempPassword);
+
+            user.AddLocalAccount(
+                HashedValue.FromPersisted(passwordHash), now);
+
+            var userRole = await _roles.GetByCodeAsync(RoleCodes.User);
+            if (userRole is null)
+                return Result.Failure<AuthTokensResult>(Error.Failure(ErrorCodes.Server.Error, "Something wrong roles."));
+
+            user.AssignRole(userRole);
+
+            user.AddSocialAccount(provider, now);
+
+            shouldSendWelcomeEmail = true;
+
+            await _users.AddAsync(user);
+        }
+        else if (!user.HasAccount(provider))
+        {
+            user.AddSocialAccount(provider, now);
+            await _users.UpdateAsync(user);
+            shouldSendWelcomeEmail = true;
+        }
+
+        var userForToken = await _users.GetByIdForTokenAsync(user.Id);
+
+        var accessTokenResult = _jwt.GenerateAccessToken(userForToken!);
+
+        var sessionId = Guid.NewGuid().ToString("N");
+        var refreshToken = await GenerateRefreshToken(user.Id, sessionId);
+
+        if (shouldSendWelcomeEmail)
+        {
+            var data = new Dictionary<string, string>
+            {
+                ["firstName"] = user.Name.FirstName,
+                ["provider"] = provider.ToString(),
+                ["email"] = user.Email.Value,
+                ["hasPassword"] = (tempPassword != null).ToString().ToLower(),
+                ["password"] = tempPassword != null
+                    ? tempPassword
+                    : $"Your account already exists. We have successfully linked your {provider.ToString()} login to it."
+            };
+
+            await SendEmail(new SendEmailCommand
+            {
+                To = user.Email.Value,
+                Purpose = EmailPurpose.OAuth2Welcome,
+                Data = data,
+                DedupTokenId = $"{user.Id.ToString()}:{provider}"
+            });
+        }
+
+        return Result.Success(
+            new AuthTokensResult
+            {
+                UserId = user.Id,
+                AccessToken = accessTokenResult.AccessToken,
+                RefreshTokenRaw = refreshToken,
+                AccessTokenMinutes = accessTokenResult.AccessTokenMinutes,
+                SessionId = sessionId,
+            },
+            successCode: SuccessCodes.Auth.LoginSuccess);
     }
     #endregion
 

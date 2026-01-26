@@ -28,6 +28,7 @@ public static class ErrorCodes
         public const string ApiKeyClientTypeForbidden = "auth.apikey.client_type_forbidden"; // 40
 
         public const string InvalidOAuth2Token = "auth.invalid_oauth2_token";
+        public const string OAuth2DiscordError = "auth.oauth2_discord_error";
     }
 
     public static class Common

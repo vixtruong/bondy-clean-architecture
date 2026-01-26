@@ -76,7 +76,8 @@ public static class DependencyInjection
         services.AddScoped<IApiKeyHasher, ApiKeyHasher>();
         services.AddScoped<IApiKeyGenerator, ApiKeyGenerator>();
 
-        services.AddScoped<IGoogleTokenVerifier, GoogleTokenVerifier>();
+        services.AddScoped<IGoogleVerifier, GoogleVerifier>();
+        services.AddScoped<IDiscordVerifier, DiscordVerifier>();
         services.AddScoped<ITempPasswordGenerator, TempPasswordGenerator>();
 
         services.AddHostedService<IdentityMigrationService>();
