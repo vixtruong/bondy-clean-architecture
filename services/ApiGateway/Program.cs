@@ -30,7 +30,12 @@ public class Program
         builder.Services.AddGatewayAuthentication(builder.Configuration);
 
         builder.Services.AddOcelot(builder.Configuration).AddPolly();
-        builder.Services.AddSwaggerForOcelot(builder.Configuration);
+        if (!builder.Environment.IsProduction())
+        {
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerForOcelot(builder.Configuration);
+        }
 
         // register middlewares as transient or scoped
         //builder.Services.AddTransient<ApiKeyGatewayMiddleware>();
@@ -51,13 +56,15 @@ public class Program
             app.Environment.EnvironmentName,
             builder.Configuration["ASPNETCORE_URLS"] ?? string.Join(", ", app.Urls));
 
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsProduction())
         {
-            app.UseSwaggerForOcelotUI(opt => opt.PathToSwaggerGenerator = "/swagger/docs");
+            app.UseHttpsRedirection();
+
         }
         else
         {
-            app.UseHttpsRedirection();
+            app.UseSwagger();
+            app.UseSwaggerForOcelotUI(opt => opt.PathToSwaggerGenerator = "/swagger/docs");
         }
 
         app.UseAuthentication();

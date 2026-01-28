@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Mail.Infrastructure\Mail.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="uploads\" />
+  </ItemGroup>
+
 </Project>

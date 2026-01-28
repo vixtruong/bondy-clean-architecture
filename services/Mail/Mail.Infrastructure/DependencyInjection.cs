@@ -1,4 +1,5 @@
 ﻿using Bondy.SharedKernel.Domain.Abstractions;
+using Bondy.SharedKernel.Infrastructure.Common.Clock;
 using Bondy.SharedKernel.Infrastructure.Configuration;
 using Mail.Application.Abstractions.Persistence;
 using Mail.Application.Abstractions.Persistence.Migrations;
@@ -15,7 +16,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
 using System.Data.Common;
-using SystemClock = Bondy.SharedKernel.Infrastructure.Common.Clock.SystemClock;
 
 namespace Mail.Infrastructure;
 

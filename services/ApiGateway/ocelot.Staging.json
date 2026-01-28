@@ -7,8 +7,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 8081
+          "Host": "identity-api",
+          "Port": 8080
         }
       ],
       "SwaggerKey": "identity"
@@ -20,8 +20,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 8081
+          "Host": "identity-api",
+          "Port": 8080
         }
       ],
       "SwaggerKey": "identity",
@@ -31,14 +31,14 @@
       }
     },
     {
-      "UpstreamPathTemplate": "/identity/uploads/{everything}",
+      "UpstreamPathTemplate": "/identity/files/{everything}",
       "UpstreamHttpMethod": [ "GET" ],
       "DownstreamPathTemplate": "/uploads/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 8081
+          "Host": "identity-api",
+          "Port": 8080
         }
       ],
       "SwaggerKey": "identity",
@@ -54,8 +54,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 8081
+          "Host": "identity-api",
+          "Port": 8080
         }
       ],
       "SwaggerKey": "identity",
@@ -71,8 +71,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 8082
+          "Host": "mail-api",
+          "Port": 8080
         }
       ],
       "SwaggerKey": "mail",

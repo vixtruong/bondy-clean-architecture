@@ -2,6 +2,7 @@
 using Bondy.ServiceDefaults.Middlewares;
 using Bondy.ServiceDefaults.Security;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +23,10 @@ public static class ServiceDefaultsRegistrationExtensions
             .AddServiceValidation();
 
         // Swagger
-        builder.Services.AddServiceSwagger();
+        if (!builder.Environment.IsProduction())
+        {
+            builder.Services.AddServiceSwagger();
+        }
 
         // HealthChecks
         builder.Services.AddServiceHealthChecks(builder.Configuration);
@@ -32,6 +36,11 @@ public static class ServiceDefaultsRegistrationExtensions
 
         // Middleware DI
         builder.Services.AddTransient<GlobalExceptionMiddleware>();
+
+        if (builder.Environment.IsProduction())
+        {
+            builder.WebHost.UseUrls("http://0.0.0.0:8080");
+        }
 
         return builder;
     }
@@ -54,13 +63,13 @@ public static class ServiceDefaultsRegistrationExtensions
         app.UseMiddleware<GlobalExceptionMiddleware>();
 
         // Swagger
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsProduction())
         {
-            app.UseServiceSwagger();
+            app.UseHttpsRedirection();
         }
         else
         {
-            app.UseHttpsRedirection();
+            app.UseServiceSwagger();
         }
 
         // AuthN/AuthZ
