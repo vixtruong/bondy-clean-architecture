@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\shared\Bondy.SharedKernel.Infrastructure\Bondy.SharedKernel.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\shared\Storage\Shared.Storage.Local\Shared.Storage.Local.csproj" />
     <ProjectReference Include="..\Identity.Application\Identity.Application.csproj" />
   </ItemGroup>
 

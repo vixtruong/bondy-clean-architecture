@@ -17,4 +17,6 @@
   <Project Path="shared/Bondy.SharedKernel.Application/Bondy.SharedKernel.Application.csproj" Id="0dad7c89-6d60-444c-b18e-ef57403c4577" />
   <Project Path="shared/Bondy.SharedKernel.Domain/Bondy.SharedKernel.Domain.csproj" Id="cf5d4b63-5e4b-4a67-89a8-5ae6df1672e7" />
   <Project Path="shared/Bondy.SharedKernel.Infrastructure/Bondy.SharedKernel.Infrastructure.csproj" Id="7aed5f6b-7c84-4dc6-bd5b-21df58115208" />
+  <Project Path="shared/Storage/Shared.Storage.Abstractions/Shared.Storage.Abstractions.csproj" Id="86b7c8e8-0a0a-48fd-a15c-192b0f193613" />
+  <Project Path="shared/Storage/Shared.Storage.Local/Shared.Storage.Local.csproj" Id="2e760d8c-e7aa-4b7e-bd31-436339086136" />
 </Solution>

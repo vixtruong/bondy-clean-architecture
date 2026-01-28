@@ -199,3 +199,10 @@ mono_crash.*
 
 # BUT keep the base config
 !**/appsettings.json
+
+
+############################
+# uploads directory
+############################
+**/uploads/*
+!**/uploads/.gitkeep

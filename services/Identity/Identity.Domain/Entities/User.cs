@@ -168,4 +168,6 @@ public sealed class User : AggregateRoot
     {
         return _accounts.Any(a => a.Provider == provider);
     }
+
+    public void SetAvatarUrl(string avatarUrl) => AvatarUrl = avatarUrl;
 }

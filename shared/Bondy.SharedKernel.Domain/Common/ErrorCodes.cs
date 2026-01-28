@@ -35,6 +35,7 @@ public static class ErrorCodes
     {
         public const string NotFound = "common.not_found";
         public const string Conflict = "common.conflict";
+        public const string Unknown = "common.unknown";
     }
 
     public static class Server
