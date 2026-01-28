@@ -3,6 +3,7 @@ using Bondy.SharedKernel.Application.Authorization.Scopes;
 using Identity.Application.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.Api.Controllers;
 
@@ -30,7 +31,7 @@ public class UsersController : ControllerBase
 
     [Authorize(Policy = ProfileScopes.AvatarUpload)]
     [HttpPost("me/avatar")]
-    public async Task<IActionResult> UploadAvatar()
-        => this.ToActionResult(await _service.UploadAvatar());
+    public async Task<IActionResult> UploadAvatar([Required] IFormFile file)
+        => this.ToActionResult(await _service.UploadAvatar(file));
 }
 

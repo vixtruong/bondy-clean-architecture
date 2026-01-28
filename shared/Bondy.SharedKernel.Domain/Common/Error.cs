@@ -9,7 +9,8 @@ public enum ErrorType
     Conflict = 4,
     Unauthorized = 5,
     Forbidden = 6,
-    Failure = 7
+    Failure = 7,
+    InternalServer = 8
 }
 
 public sealed record Error(
@@ -42,5 +43,8 @@ public sealed record Error(
 
     public static Error BadRequest(string code, string message, IReadOnlyDictionary<string, object?>? meta = null)
         => new(code, message, ErrorType.BadRequest, meta);
-
+    public static Error InternalServer(string code,
+        string message = "Internal server error",
+        IReadOnlyDictionary<string, object?>? meta = null)
+        => new(code, message, ErrorType.InternalServer, meta);
 }

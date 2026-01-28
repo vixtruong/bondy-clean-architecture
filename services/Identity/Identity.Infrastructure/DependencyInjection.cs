@@ -17,8 +17,11 @@ using Identity.Infrastructure.Persistence;
 using Identity.Infrastructure.Persistence.Seed;
 using Identity.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Storage.Abstractions;
+using Shared.Storage.Local;
 
 namespace Identity.Infrastructure;
 
@@ -38,6 +41,9 @@ public static class DependencyInjection
                     npsql.MigrationsAssembly(typeof(DependencyInjection).Assembly.GetName().Name);
                 })
                 .UseSnakeCaseNamingConvention();
+
+            opt.ConfigureWarnings(w =>
+                w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
         });
 
         services.AddScoped<IIdentityDbContext>(sp => sp.GetRequiredService<IdentityDbContext>());
@@ -84,6 +90,8 @@ public static class DependencyInjection
 
         services.AddScoped<RoleSeeder>();
         services.AddHostedService<RoleSeedHostedService>();
+
+        services.AddScoped<IFileStorage, LocalFileStorage>();
 
         return services;
     }
