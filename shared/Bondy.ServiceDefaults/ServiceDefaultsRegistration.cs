@@ -3,6 +3,7 @@ using Bondy.ServiceDefaults.Middlewares;
 using Bondy.ServiceDefaults.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -41,6 +42,13 @@ public static class ServiceDefaultsRegistrationExtensions
             serviceName,
             app.Environment.EnvironmentName,
             builder.Configuration["ASPNETCORE_URLS"] ?? string.Join(", ", app.Urls));
+
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(
+                Path.Combine(builder.Environment.ContentRootPath, "uploads")),
+            RequestPath = "/uploads"
+        });
 
         // Global exception
         app.UseMiddleware<GlobalExceptionMiddleware>();
