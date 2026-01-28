@@ -1,0 +1,24 @@
+{
+  "SwaggerEndPoints": [
+    {
+      "Key": "identity",
+      "Config": [
+        {
+          "Name": "Identity API",
+          "Version": "v1",
+          "Url": "http://identity-api:8080/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "mail",
+      "Config": [
+        {
+          "Name": "Mail API",
+          "Version": "v1",
+          "Url": "http://mail-api:8080/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ]
+}

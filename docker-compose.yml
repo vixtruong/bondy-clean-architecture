@@ -1,0 +1,88 @@
+networks:
+  bondy-network:
+    driver: bridge
+
+services:
+
+  postgres:
+    container_name: bondy-postgres
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_USER: bondy
+      POSTGRES_PASSWORD: bondy123
+      POSTGRES_DB: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-5434:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - bondy-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bondy -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  identity-api:
+    container_name: bondy-identity
+    build:
+      context: .
+      dockerfile: services/Identity/Identity.Api/Dockerfile
+    image: bondy-identity:local
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+    volumes:
+      - ./uploads/identity:/app/uploads
+    networks:
+      - bondy-network
+    restart: unless-stopped
+
+  mail-api:
+    container_name: bondy-mail
+    build:
+      context: .
+      dockerfile: services/Mail/Mail.Api/Dockerfile
+    image: bondy-mail:local
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+    volumes:
+      - ./uploads/mail:/app/uploads
+    networks:
+      - bondy-network
+    restart: unless-stopped
+
+  api-gateway:
+    container_name: bondy-gateway
+    build:
+      context: .
+      dockerfile: services/ApiGateway/Dockerfile
+    image: bondy-gateway:local
+    ports:
+      - "8080:8080"
+    depends_on:
+      - identity-api
+      - mail-api
+    volumes:
+      - ./services/ApiGateway:/app/config:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+    networks:
+      - bondy-network
+    restart: unless-stopped
+
+volumes:
+  pgdata-5434:

@@ -19,8 +19,14 @@ public sealed class SqlFileMigrator : IDbMigrator
     {
         _connection = connection;
         _logger = logger;
-        _migrationsPath = config["Migrations:SqlPath"]
-                          ?? throw new InvalidOperationException("Missing config Migrations:SqlPath");
+
+        var configuredPath = config["Migrations:SqlPath"]
+                             ?? throw new InvalidOperationException("Missing config Migrations:SqlPath");
+
+
+        _migrationsPath = Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.Combine(AppContext.BaseDirectory, configuredPath);
     }
 
     public async Task MigrateAsync(CancellationToken ct)
